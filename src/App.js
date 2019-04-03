@@ -1,28 +1,514 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
 
-class App extends Component {
-  render() {
+const request = require('request');
+
+class SolarPanel {
+  constructor(id,power,size,azimuth,tilt){
+    this.id = id;
+    this.power = power;
+    this.size = size;
+    this.azimuth = azimuth;
+    this.tilt = tilt;
+  }
+  GetId(){
+    return this.id
+  }
+  GetPower(char){
+    if (char === 'k'){
+      return Math.round(this.power/1000);
+    }
+    return this.power;
+  }
+  GetSize(){
+    return this.size;
+  }
+  GetAzimuth(){
+    return this.azimuth;
+  }
+  GetTilt(){
+    return this.tilt;
+  }
+}
+
+class WindTurbine {
+  constructor(id,power,number,azimuth){
+    this.id = id;
+    this.power = power;
+    this.number = number;
+    this.azimuth = azimuth;
+  }
+  GetId(){
+    return this.id;
+  }
+  GetPower(char){
+    if (char === 'k'){
+      return Math.round(this.power/1000);
+    }
+    return this.power;
+  }
+  GetNumber(){
+    return this.number;
+  }
+  GetAzimuth(){
+    return this.azimuth;
+  }
+}
+
+class Barrage {
+  constructor(id,power){
+    this.id = id;
+    this.power = power;
+  }
+  GetId(){
+    return this.id;
+  }
+  GetPower(char){
+    if (char === 'k'){
+      return Math.round(this.power/1000000);
+    }
+    return this.power;
+  }
+}
+
+class City {
+  constructor(id,population,consumption){
+    this.id = id;
+    this.population = population;
+    this.consumption = consumption;
+  }
+  GetId(){
+    return this.id;
+  }
+  GetPopulation(){
+    return this.population;
+  }
+  GetConsumption(char){
+    if (char === 'k'){
+      return Math.round(this.consumption/1000000);
+    }
+    return this.consumption;
+  }
+}
+
+class Flywheel {
+  constructor(id,size,efficiency,storage,consumption,power,mode){
+    this.id = id;
+    this.size = size;
+    this.efficiency = efficiency;
+    this.storage = storage;
+    this.consumption = consumption;
+    this.power = power;
+    this.mode = mode;
+  }
+  UpdateStorage(storage){
+    this.storage += storage
+  }
+  SetMode(mode){
+    this.mode = mode;
+  }
+  SetPower(power){
+    this.power = power;
+  }
+  SetStorage(storage){
+    this.storage = storage;
+  }
+  GetStorage(){
+    return this.storage;
+  }
+  GetId(){
+    return this.id;
+  }
+  GetConsumption(){
+    return this.consumption;
+  }
+  GetPower(){
+    return this.power;
+  }
+}
+
+let solarPanels = [];
+let windTurbines = [];
+let flywheels = [];
+let cities = [];
+let barrages = [];
+let sizeSolarPanels = 0;
+let sizeWindTurbines = 0;
+let sizeCities = 0;
+let sizeBarrages = 0;
+let sizeFlyWheels = 0;
+let cV = 0;
+let sV = 0;
+let bV = 0;
+let wV = 0;
+let time = 0;
+let timeTest = 0;
+let end = 0;
+
+const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
+const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
+const BARRAGE_REQUEST = "http://localhost:8000/api/v1/producers/hydroelectric-dams";
+const CITIES_REQUEST = "http://localhost:8000/api/v1/consumers/cities";
+const FLYWHEELS_REQUEST = "http://localhost:8000/api/v1/storages/flywheels";
+const TIME_REQUEST = "http://localhost:8000/api/v1/sensors/datetime";
+
+console.log("Setted all constant");
+
+function PowerP(power){
+  return (power*3600)/40;
+}
+function PowerKW(storage){
+  return (storage*40)/3600;
+}
+function StorageP(power){
+  return (power/3600)/40;
+}
+
+function Initialization(){
+  console.log("Getting Flywheels");
+  request(FLYWHEELS_REQUEST, function (error, response, body) {
+    console.log("Request : " + FLYWHEELS_REQUEST);
+    console.log(body);
+    var data = JSON.parse(body);
+    data.forEach(flywheel => {
+      flywheels.push(new Flywheel(flywheel.id,flywheel.size,flywheel.efficiency,flywheel.storage,flywheel.consumption,flywheel.power,flywheel.mode));
+    });
+  });
+}
+
+function GettingData(){
+  Initialization();
+  sizeSolarPanels = 0;
+  sizeWindTurbines = 0;
+  sizeCities = 0;
+  sizeBarrages = 0;
+  cV = 0;
+  sV = 0;
+  bV = 0;
+  wV = 0;
+  solarPanels = [];
+  windTurbines = [];
+  barrages = [];
+  cities = [];
+  request(TIME_REQUEST, function (error, response, body) {
+    console.log("Request : " + TIME_REQUEST);
+    let data = JSON.parse(body);
+    console.log(body);
+    timeTest = data.datetime;
+    console.log(body);
+    console.log("Getting Time / Actual : " + time + " / Getting : " + timeTest);
+    request(WIND_TURBINE_REQUEST, function (error, response, body) {
+      console.log("Request : " + WIND_TURBINE_REQUEST);
+      let data = JSON.parse(body);
+      sizeWindTurbines = data.length;
+      data.forEach(windTurbine => {
+        wV += windTurbine.power;
+        windTurbines.push(new WindTurbine(windTurbine.id,windTurbine.power,windTurbine.number,windTurbine.azimuth));
+      });
+      request(BARRAGE_REQUEST, function (error, response, body) {
+        console.log("Request : " + BARRAGE_REQUEST);
+        let data = JSON.parse(body);
+        sizeBarrages = data.length;
+        data.forEach(barrage => {
+          bV += barrage.power;
+          barrages.push(new Barrage(barrage.id,barrage.power));
+        });
+        request(CITIES_REQUEST, function (error, response, body) {
+          console.log("Request : " + CITIES_REQUEST);
+          let data = JSON.parse(body);
+          sizeCities = data.length;
+          data.forEach(city => {
+            cV += city.consumption;
+            cities.push(new City(city.id,city.population,city.consumption));
+          });
+          request(SOLAR_PANEL_REQUEST, function (error, response, body) {
+            console.log("Request : " + SOLAR_PANEL_REQUEST);
+            let data = JSON.parse(body);
+            sizeSolarPanels = data.length;
+            data.forEach(solarPanel => {
+              sV += solarPanel.power;
+              solarPanels.push(new SolarPanel(solarPanel.id, solarPanel.power, solarPanel.number, solarPanel.azimuth, solarPanel.tilt));
+            });
+            console.log("Previous time : " + time + " / New time : " + timeTest);
+            console.log(sizeSolarPanels + "/" + solarPanels.length);
+            while(1){
+              console.log("Previous time : " + time + " / New time : " + timeTest);
+              if(sizeSolarPanels !== 0 && sizeBarrages !== 0 && sizeCities !== 0 && sizeWindTurbines !== 0 && solarPanels.length === sizeSolarPanels && windTurbines.length === sizeWindTurbines && cities.length === sizeCities && barrages.length === sizeBarrages && time !== timeTest){
+                time = timeTest;
+                if(cV > bV + sV + wV) {
+                  console.log("Loosing power");
+                }
+                else {
+                  console.log("Saving power");
+                }
+                const generation = sV + wV + bV;
+                const consumption = cV;
+                const result = generation - consumption;
+                if (result > 0){
+                  let overflow = result;
+                  console.log("Saving power --> Charging flywheels");
+                  let i;
+                  for(i = 0; i < sizeFlyWheels; i++){
+                    const storage = flywheels[i].GetStorage();
+                    if(storage < 1){
+                      if((storage + PowerP(overflow)) < 1){
+                        flywheels[i].UpdateStorage(PowerP(overflow));
+                        flywheels[i].SetMode("Consumer");
+                        break;
+                      }
+                      else {
+                        const maxStorage = (1 - flywheels[i].GetStorage()) * 40 / 3600;
+                        flywheels[i].SetStorage(1);
+                        flywheels[i].SetMode("Full");
+                        break;
+                      }
+                    }
+                    else {
+                      continue;
+                    }
+                  }
+                }
+                else {
+                  let resource = Math.abs(result);
+                  console.log("Missing " + resource + "kW");
+                  for (let i = 0; i < sizeFlyWheels; i++) {
+                    let maxPower = PowerKW(flywheels[i].GetStorage());
+                    if (maxPower > 40) {
+                      maxPower = 40;
+                    }
+                    if (resource <= maxPower) {
+                      flywheels[i].SetComsumption = maxPower;
+                      flywheels[i].UpdateStorage(StorageP(maxPower));
+                      flywheels[i].SetMode("Producer");
+                      break;
+                    }
+                    else {
+                      resource -= maxPower
+                      flywheels[i].SetComsumption = maxPower;
+                      flywheels[i].UpdateStorage(StorageP(maxPower));
+                      flywheels[i].SetMode("Producer");
+                    }
+                    if (resource > 0) {
+                      console.log("Coal");
+                    }
+                  }
+                }
+                console.log("SolarPanelPower "+sV);
+                console.log("BarragePower "+bV);
+                console.log("WindTurbinePower "+wV);
+                console.log("CitiesPower "+cV);
+                end = 1;
+                let sI = 0;
+                sV = Math.round(sV/1000);
+                wV = Math.round(wV/1000);
+                bV = Math.round(bV/1000);
+                cV = Math.round(cV/1000);
+                document.getElementById("sv").textContent=sV;
+                document.getElementById("bv").textContent=bV;
+                document.getElementById("wv").textContent=wV;
+                document.getElementById("cv").textContent=cV;
+                if(result > 0){ //if Flywheels are consumer
+                  let total_producer = sV+bV+wV;
+                  document.getElementById("total_producer").textContent= total_producer;
+                  console.log('Flywheels are consumer');
+                  let idDiv = document.createElement("p");
+                  idDiv.appendChild(document.createTextNode("Flywheels are consumer"));
+                  idDiv.setAttribute('class','info');
+                  let newDiv = document.createElement("div");
+                  newDiv.setAttribute('class','block');
+                  newDiv.appendChild(idDiv);
+                  let currentDiv = document.getElementById("flywheelEnd1");
+                  let parentDiv = document.getElementById("flywheelParent1");
+                  parentDiv.insertBefore(newDiv, currentDiv);
+                  flywheels.forEach(flywheel => {
+                    let idDiv = document.createElement("p");
+                    idDiv.appendChild(document.createTextNode("Flywheel Id : "+flywheel.GetId()));
+                    let powerDiv = document.createElement("p");
+                    powerDiv.appendChild(document.createTextNode("Consumption : "+flywheel.GetConsumption('k')+" kW"));
+                    let storageDiv = document.createElement("p");
+                    storageDiv.appendChild(document.createTextNode("Storage : "+flywheel.GetStorage()+ " %"));
+                    let newDiv = document.createElement("div");
+                    newDiv.setAttribute('class','block sub_block');
+                    newDiv.appendChild(idDiv);
+                    newDiv.appendChild(powerDiv);
+                    newDiv.appendChild(storageDiv);
+                    let currentDiv = document.getElementById("flywheelEnd2");
+                    let parentDiv = document.getElementById("flywheelParent2");
+                    parentDiv.insertBefore(newDiv, currentDiv);
+                  });
+                }
+                else {
+                  console.log('Flywheels are producer');
+                  let idDiv = document.createElement("p");
+                  idDiv.appendChild(document.createTextNode("Flywheels are producer"));
+                  idDiv.setAttribute('class','info');
+                  let newDiv = document.createElement("div");
+                  newDiv.setAttribute('class','block');
+                  newDiv.appendChild(idDiv);
+                  let currentDiv = document.getElementById("flywheelEnd2");
+                  let parentDiv = document.getElementById("flywheelParent2");
+                  parentDiv.insertBefore(newDiv, currentDiv);
+                  flywheels.forEach(flywheel => {
+                    let idDiv = document.createElement("p");
+                    idDiv.appendChild(document.createTextNode("Flywheel Id : "+flywheel.GetId()));
+                    let powerDiv = document.createElement("p");
+                    powerDiv.appendChild(document.createTextNode("Consumption : "+flywheel.GetConsumption('k')+" kW"));
+                    let storageDiv = document.createElement("p");
+                    storageDiv.appendChild(document.createTextNode("Storage : "+flywheel.GetStorage()+ " %"));
+                    let newDiv = document.createElement("div");
+                    newDiv.setAttribute('class','block sub_block');
+                    newDiv.appendChild(idDiv);
+                    newDiv.appendChild(powerDiv);
+                    newDiv.appendChild(storageDiv);
+                    let currentDiv = document.getElementById("flywheelEnd1");
+                    let parentDiv = document.getElementById("flywheelParent1");
+                    parentDiv.insertBefore(newDiv, currentDiv);
+                  });
+                }
+                solarPanels.forEach(solarPanel => {
+                  let idDiv = document.createElement("p");
+                  idDiv.appendChild(document.createTextNode("Solar Panel Id : "+solarPanel.GetId()));
+                  let powerDiv = document.createElement("p");
+                  powerDiv.appendChild(document.createTextNode("Power : "+solarPanel.GetPower('k')+" kW"));
+                  let rateDiv = document.createElement("p");
+                  const rate = solarPanel.GetPower('k')/solarPanel.GetSize();
+                  rateDiv.appendChild(document.createTextNode("Average : "+rate+" kW/m²"));
+                  let newDiv = document.createElement("div");
+                  newDiv.setAttribute('class','block sub_block');
+                  newDiv.appendChild(idDiv);
+                  newDiv.appendChild(powerDiv);
+                  newDiv.appendChild(rateDiv);
+                  let currentDiv = document.getElementById("solarEnd");
+                  let parentDiv = document.getElementById("solarParent");
+                  parentDiv.insertBefore(newDiv, currentDiv);
+                });
+                windTurbines.forEach(windTurbine => {
+                  let idDiv = document.createElement("p");
+                  idDiv.appendChild(document.createTextNode("Wind Turbine Id : "+windTurbine.GetId()));
+                  let powerDiv = document.createElement("p");
+                  powerDiv.appendChild(document.createTextNode("Power : "+windTurbine.GetPower('k')+" kW"));
+                  let rateDiv = document.createElement("p");
+                  const rate = Math.round(windTurbine.GetPower('k')/windTurbine.GetNumber());
+                  rateDiv.appendChild(document.createTextNode("Average : "+rate+" kW/U"));
+                  let newDiv = document.createElement("div");
+                  newDiv.setAttribute('class','block sub_block');
+                  newDiv.appendChild(idDiv);
+                  newDiv.appendChild(powerDiv);
+                  newDiv.appendChild(rateDiv);
+                  let currentDiv = document.getElementById("windEnd");
+                  let parentDiv = document.getElementById("windParent");
+                  parentDiv.insertBefore(newDiv, currentDiv);
+                });
+                barrages.forEach(barrages => {
+                  let idDiv = document.createElement("p");
+                  idDiv.appendChild(document.createTextNode("Barrage Id : "+barrages.GetId()));
+                  let powerDiv = document.createElement("p");
+                  powerDiv.appendChild(document.createTextNode("Power : "+barrages.GetPower('k')+" MW"));
+                  let newDiv = document.createElement("div");
+                  newDiv.setAttribute('class','block sub_block');
+                  newDiv.appendChild(idDiv);
+                  newDiv.appendChild(powerDiv);
+                  let currentDiv = document.getElementById("barrageEnd");
+                  let parentDiv = document.getElementById("barrageParent");
+                  parentDiv.insertBefore(newDiv, currentDiv);
+                });
+                cities.forEach(city => {
+                  let idDiv = document.createElement("p");
+                  idDiv.appendChild(document.createTextNode("City Id : "+city.GetId()));
+                  let powerDiv = document.createElement("p");
+                  powerDiv.appendChild(document.createTextNode("Power : "+city.GetConsumption('k')+" MW"));
+                  let newDiv = document.createElement("div");
+                  newDiv.setAttribute('class','block sub_block');
+                  newDiv.appendChild(idDiv);
+                  newDiv.appendChild(powerDiv);
+                  let currentDiv = document.getElementById("cityEnd");
+                  let parentDiv = document.getElementById("cityParent");
+                  parentDiv.insertBefore(newDiv, currentDiv);
+                });
+                break;
+              }
+            }
+          });
+        });
+      });
+    });
+  });
+}
+function App(){
+    GettingData();
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+      <div className={"header"}>
+        <div>
+          <div id="local" className="block local">
+            <div><p>Date : <span id="date" className="date">03-04-2019</span></p></div>
+            <div><p>Time : <span id="time" className="time">11:05:34</span></p></div>
+          </div>
+          <div id="wind" className="block wrap_wind">
+            <div><p>Wind Speed : <span id="speed">50 km/h</span></p></div>
+            <div><p>Wind Azimuth : <span id="azimutW">30°</span></p></div>
+          </div>
+          <div id="solar" className="block wrap_solar">
+            <div><p>Luminosity : <span id="luminosity">100 Lumens</span></p></div>
+            <div><p>Azimuth : <span id="azimuthS">45°</span></p></div>
+          </div>
+          <div id="co2" className="block wrapco2">
+            <div><p>Production : <span id="co2prod">100 kg/h</span></p></div>
+            <div><p>Total Production : <span id="co2total">48744 kg</span></p></div>
+          </div>
+        </div>
+        <div id={"Producer"} className={"Producer"}>
+          <p className={"title"}>Producers <span id="total_producer">0</span> kW</p>
+          <div className={"line"} id={"solarParent"}>
+            <div id={"solar"} className={"block main_block"}>
+              <p className={"block_title"}>Solar Panels</p>
+              <p>Power : <span id="sv">0</span> kW</p>
+            </div>
+            <div id={"solarEnd"}/>
+          </div>
+          <div className={"line"} id={"windParent"}>
+            <div id={"wind"} className={"block main_block"}>
+              <p className={"block_title"}>Wind Turbines</p>
+              <p>Power : <span id="wv">0</span> kW</p>
+            </div>
+            <div id={"windEnd"}/>
+          </div>
+          <div className={"line"} id={"barrageParent"}>
+            <div id={"barrage"} className={"block main_block"}>
+              <p className={"block_title"}>Barrages</p>
+              <p>Power : <span id="bv">0</span> kW</p>
+            </div>
+            <div id={"barrageEnd"}/>
+          </div>
+          <div className={"line flywheelParent"} id={"flywheelParent1"}>
+            <div id={"flywheel"} className={"block main_block"}>
+              <p className={"block_title"}>Flywheels</p>
+              <p>Power : <span id="fv">0</span> kW</p>
+            </div>
+            <div id={"flywheelEnd1"}/>
+          </div>
+        </div>
+        <div id={"Consumer"} className={"Consumer"}>
+          <p className={"title"}>Consumers</p>
+          <div className={"line"} id={"cityParent"}>
+            <div id={"city"} className={"block main_block"}>
+              <p className={"block_title"}>Cities</p>
+              <p>Power : <span id="cv">0</span> kW</p>
+            </div>
+            <div id={"cityEnd"}/>
+          </div>
+          <div className={"line flywheelParent"} id={"flywheelParent2"}>
+            <div id={"flywheel"} className={"block main_block"}>
+              <p className={"block_title"}>Flywheels</p>
+              <p>Power : <span id="fv">0</span> kW</p>
+            </div>
+            <div id={"flywheelEnd2"}/>
+          </div>
+        </div>
+        <div id={"Stats"}>
+        <p>Stats</p>
+        </div>
       </div>
     );
-  }
 }
 
 export default App;
