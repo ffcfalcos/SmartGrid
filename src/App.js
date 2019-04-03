@@ -263,9 +263,6 @@ function GettingData(){
                         break;
                       }
                     }
-                    else {
-                      continue;
-                    }
                   }
                 }
                 else {
@@ -283,7 +280,7 @@ function GettingData(){
                       break;
                     }
                     else {
-                      resource -= maxPower
+                      resource -= maxPower;
                       flywheels[i].SetComsumption = maxPower;
                       flywheels[i].UpdateStorage(StorageP(maxPower));
                       flywheels[i].SetMode("Producer");
@@ -298,7 +295,6 @@ function GettingData(){
                 console.log("WindTurbinePower "+wV);
                 console.log("CitiesPower "+cV);
                 end = 1;
-                let sI = 0;
                 sV = Math.round(sV/1000);
                 wV = Math.round(wV/1000);
                 bV = Math.round(bV/1000);
@@ -307,8 +303,9 @@ function GettingData(){
                 document.getElementById("bv").textContent=bV;
                 document.getElementById("wv").textContent=wV;
                 document.getElementById("cv").textContent=cV;
+                let total_producer = sV+bV+wV;
                 if(result > 0){ //if Flywheels are consumer
-                  let total_producer = sV+bV+wV;
+                  //add flywheels power
                   document.getElementById("total_producer").textContent= total_producer;
                   console.log('Flywheels are consumer');
                   let idDiv = document.createElement("p");
