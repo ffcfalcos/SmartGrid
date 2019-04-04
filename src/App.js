@@ -239,14 +239,6 @@ function Initialization(){
   });
 }*/
 
-let promise1 = new Promise(function(resolve, reject){
-  request(SOLAR_REQUEST, function (error, response, body) {
-    let data = JSON.parse(body);
-    solarAlt = data.altitude;
-    solarAz = data.azimuth;
-  });
-});
-
 function GettingData(){
   sizeSolarPanels = 0;
   sizeWindTurbines = 0;
@@ -261,7 +253,11 @@ function GettingData(){
   windTurbines = [];
   barrages = [];
   cities = [];
-
+  request(SOLAR_REQUEST, function (error, response, body) {
+    let data = JSON.parse(body);
+    solarAlt = data.altitude;
+    solarAz = data.azimuth;
+  });
   request(WIND_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
     windSp = data.speed;
@@ -292,6 +288,7 @@ function GettingData(){
             cV += city.consumption;
             cities.push(new City(city.id,city.population,city.consumption));
           });
+          console.log("Count"+solarPanels.length);
           request(SOLAR_PANEL_REQUEST, function (error, response, body) {
             let data = JSON.parse(body);
             sizeSolarPanels = data.length;
@@ -300,17 +297,11 @@ function GettingData(){
               solarPanels.push(new SolarPanel(solarPanel.id, solarPanel.power, solarPanel.number, solarPanel.azimuth, solarPanel.tilt));
             });
             time = timeTest;
-            if(cV > bV + sV + wV) {
-              console.log("Loosing power");
-            }
-            else {
-              console.log("Saving power");
-            }
-            const generation = sV + wV + bV; //Whatt
-            const consumption = cV; //Whatt
-            const result = generation - consumption; //Whatt
+            const generation = sV + wV + bV; //Watt
+            const consumption = cV; //Watt
+            const result = generation - consumption; //Watt
             if (result > 0){ //if we get extra power
-              let overflow = result; //Whatt
+              let overflow = result; //Watt
               console.log("Saving power --> Charging flywheels");
               let i;
               for(i = 0; i < sizeFlyWheels; i++){
@@ -486,6 +477,7 @@ function GettingData(){
               }
               else {
                 const rate = Math.round(windTurbine.GetPower('k') / windTurbine.GetNumber());
+                console.log("Updating wind turbines" + windTurbine.GetPower());
                 document.getElementById("solarP"+ windTurbine.GetId()).textContent="Power : " + windTurbine.GetPower('k') + " kW";
                 document.getElementById("solarR"+ windTurbine.GetId()).textContent="Average : " + rate + " kW/U";
               }
