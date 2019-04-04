@@ -55,6 +55,11 @@
     background-size:cover;
     border-radius: 20px;
 }
+.centralParent{
+    background: linear-gradient(rgba(0, 0, 0, 0.45),rgba(0, 0, 0, 0.45)),url('images/usine.jpg');
+    background-size:cover;
+    border-radius: 20px;
+}
 .title{
     font-weight: bold;
     font-size: 40px;
@@ -63,6 +68,16 @@
     color: white;
     font-weight:bold;
     width: 195px;
+    height: 200px;
+    border-left-style: solid;
+    border-color: black;
+    border-width: 1px;
+    padding-left: 10px;
+}
+.sub_block2{
+    color: white;
+    font-weight:bold;
+    width: 500px;
     height: 200px;
     border-left-style: solid;
     border-color: black;
@@ -136,10 +151,21 @@
     background-repeat:no-repeat;
 
 }
-.header{
-    height: 100px;
+.overall{
     margin-left: 50px;
-    margin-top: 20px;
+}
+.header{
+    padding-top: 20px;
+    position: fixed;
+    top:0;
+    width: 100%;
+    opacity: 1;
+    background-color: white;
+    border-bottom: solid;
+    margin-right: 50px;
+}
+.Producer{
+    margin-top: 300px;
 }
 .button_menu{
     background-color: green;
