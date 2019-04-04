@@ -294,7 +294,7 @@ function GettingData(){
                 console.log('--> First Flywheel is not full');
                 if ((storage + overflowP) < 1) { //if the flywheel can storage all the overflow
                   console.log('--> This Flywheel can save all : ' + overflowP);
-                  flywheel.UpdateStorage(overflowP); //Watt --> Watt/h --> kWatt/h
+                  flywheel.UpdateStorage(overflowP*0.98); //Watt --> Watt/h --> kWatt/h
                   flywheel.SetConsumption(overflow);
                   flywheel.SetMode("Consumer");
                   overflow = 0;
@@ -303,7 +303,7 @@ function GettingData(){
                   flywheel.SetStorage(1);
                   flywheel.SetConsumption(overflow);
                   flywheel.SetMode("Idle");
-                  overflow -= maxStorage / flywheel.GetEfficiency();
+                  overflow -= maxStorage;
                 }
               }
             });
