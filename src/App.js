@@ -250,7 +250,7 @@ function GettingData(){
                     const storage = flywheels[i].GetStorage(); //%
                     if(storage < 1){ //if the flywheel storage is not full
                       if((storage + overflowP) < 1){ //if the flywheel can storage all the overflow
-                        flywheels[i].UpdateStorage(overflowP); //whatt --> whatt/h --> kWhatt/h
+                        flywheels[i].UpdateStorage(overflowP); //Whatt --> Whatt/h --> kWhatt/h
                         flywheels[i].SetConsumption(overflow);
                         flywheels[i].SetMode("Consumer");
                         break;
@@ -266,24 +266,23 @@ function GettingData(){
                     }
                   }
                 }
-                else {
-                  let resource = Math.abs(result);
-                  console.log("Missing " + resource + "kW");
+                else { //not enough power from producer
+                  let resource = Math.abs(result); //power needed in Whatt
+                  console.log("Missing " + resource/1000 + "kW");
                   for (let i = 0; i < sizeFlyWheels; i++) {
-                    let maxPower = PowerKW(flywheels[i].GetStorage());
-                    if (maxPower > 40) {
-                      maxPower = 40;
+                    let maxPower = flywheels[i].GetStorage()*flywheelsMaxStorage*3600*1000; //power of the flywheel in Whatt
+                    if (maxPower > 40000) {
+                      maxPower = 40000; //Setting max power in Whatt
                     }
-                    if (resource <= maxPower) {
-                      flywheels[i].SetComsumption = maxPower;
-                      flywheels[i].UpdateStorage(StorageP(maxPower));
+                    flywheels[i].SetPower = maxPower;
+                    if (resource <= maxPower) { //if this flywheel has enough for power
+                      flywheels[i].UpdateStorage(0 - ((maxPower/3600)/1000)/40);
                       flywheels[i].SetMode("Producer");
                       break;
                     }
                     else {
                       resource -= maxPower;
-                      flywheels[i].SetComsumption = maxPower;
-                      flywheels[i].UpdateStorage(StorageP(maxPower));
+                      flywheels[i].UpdateStorage(0 - ((maxPower/3600)/1000)/40);
                       flywheels[i].SetMode("Producer");
                     }
                     if (resource > 0) {
