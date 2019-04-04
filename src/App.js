@@ -454,7 +454,7 @@ function GettingData(){
                   parentDiv.insertBefore(newDiv, currentDiv);
                 });
                 windTurbines.forEach(windTurbine => {
-                  WriteData("windTurbines.log",windTurbine.GetData(time,windAz,windSp)); 
+                  WriteData("windTurbines.csv",windTurbine.GetData(time,windAz,windSp)); 
                   let idDiv = document.createElement("p");
                   idDiv.appendChild(document.createTextNode("Wind Turbine Id : "+windTurbine.GetId()));
                   let powerDiv = document.createElement("p");
@@ -520,7 +520,6 @@ function GettingData(){
                 break;
               }
             }
-            setTimeout(GettingData,1000);
           });
         });
       });
