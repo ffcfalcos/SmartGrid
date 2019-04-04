@@ -131,12 +131,29 @@ class Flywheel {
   GetEfficiency(){
     return this.efficiency;
 }
+  
+class Central {
+  constructor(emission,total){
+    this.emission = emission;
+    this.total = total;
+  }
+  GetTotal(){
+    return this.total;
+  }
+  GetEmission(){
+    return this.emission;
+  }
+  UpdateTotal(add){
+    this.total += add;
+  }
+}
 
 let solarPanels = [];
 let windTurbines = [];
 let flywheels = [];
 let cities = [];
 let barrages = [];
+let centrals[];
 let sizeSolarPanels = 0;
 let sizeWindTurbines = 0;
 let sizeCities = 0;
@@ -157,6 +174,9 @@ const BARRAGE_REQUEST = "http://localhost:8000/api/v1/producers/hydroelectric-da
 const CITIES_REQUEST = "http://localhost:8000/api/v1/consumers/cities";
 const FLYWHEELS_REQUEST = "http://localhost:8000/api/v1/storages/flywheels";
 const TIME_REQUEST = "http://localhost:8000/api/v1/sensors/datetime";
+const CENTRAL_REQUEST = "http://localhost:8000/api/v1/sensors/emissions";
+const WIND_REQUEST = "http://localhost:8000/api/v1/sensors/wind";
+const SOLAR_REQUEST = "http://localhost:8000/api/v1/sensors/sun";
 
 console.log("Setted all constant");
 
@@ -169,6 +189,14 @@ function Initialization(){
     data.forEach(flywheel => {
       flywheels.push(new Flywheel(flywheel.id,flywheel.size,flywheel.efficiency,flywheel.storage,flywheel.consumption,flywheel.power,flywheel.mode));
     });
+    request(CENTRAL_REQUEST, function (error, response, body) {
+    console.log("Request : " + CENTRAL_REQUEST);
+    console.log(body);
+    var data = JSON.parse(body);
+    data.forEach(central => {
+      centrals.push(new Central(central.emission,central.total));
+    });
+  });
   });
 }
 
