@@ -53,6 +53,9 @@ class WindTurbine {
   GetAzimuth(){
     return this.azimuth;
   }
+  GetData(time,windAz,windSp){ // id,power,number,azimuth,windS,windA
+    return time + ',' + this.id + ',' + this.power + ',' + this.number + ',' + this.azimuth + ',' + windSp + ',' + windAz;
+  }
 }
 
 class Barrage {
@@ -207,6 +210,13 @@ function Initialization(){
       central = new Central(data.emission,data.total);
     });
   });
+}
+
+function WriteData(fileName,content){
+  let fileSystem = new ActiveXObject("Scripting.FileSystemObject");
+  let file = fileSystem.OpenTextFile("tutorielsenfolie.txt", 8 ,true);
+  file.WriteLine(content);
+  monFichier.Close();
 }
 
 function GettingData(){
@@ -408,7 +418,7 @@ function GettingData(){
                 }
                 solarPanels.forEach(solarPanel => {
                   let idDiv = document.createElement("p");
-                  idDiv.appendChild(document.createTextNode("Solar Panel Id : "+solarPanel.GetId()));
+                  idDiv.appendChild(document.createTextNode("Solar Panel Id : "+solarPanel.GetId()));                  
                   let powerDiv = document.createElement("p");
                   powerDiv.appendChild(document.createTextNode("Power : "+solarPanel.GetPower('k')+" kW"));
                   let rateDiv = document.createElement("p");
@@ -424,6 +434,7 @@ function GettingData(){
                   parentDiv.insertBefore(newDiv, currentDiv);
                 });
                 windTurbines.forEach(windTurbine => {
+                  WriteData("windTurbines.log",windTurbine.GetData(time,windAz,windSp)); 
                   let idDiv = document.createElement("p");
                   idDiv.appendChild(document.createTextNode("Wind Turbine Id : "+windTurbine.GetId()));
                   let powerDiv = document.createElement("p");
