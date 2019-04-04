@@ -214,9 +214,30 @@ function Initialization(){
 
 function WriteData(fileName,content){
   let fileSystem = new ActiveXObject("Scripting.FileSystemObject");
-  let file = fileSystem.OpenTextFile("tutorielsenfolie.txt", 8 ,true);
+  let file = fileSystem.OpenTextFile(fileName, 8 ,true);
   file.WriteLine(content);
   monFichier.Close();
+}
+
+function AnalyseWind(id,power,windAz,windSp){
+  let minPower;
+  let maxPower
+  d3.csv("data/windTurbines.csv").then(function(data) {
+    data.forEach(line => {
+      if (line.id === id && (Math.abs((line.windA - windAz)/line.windA) <= 0,05 && (Math.abs((line.windS - windSp)/line.windS) <= 0,05){
+        if (minPower === 0 || line.power < minPower){
+          minPower = line.power;
+        }
+        if (maxPower === 0 || line.power > maxPower){
+          maxPower = line.power;
+        }
+      }
+    });
+    if (power > minPower && power < maxPower){
+      return true;
+    }
+    return false;
+  }
 }
 
 function GettingData(){
