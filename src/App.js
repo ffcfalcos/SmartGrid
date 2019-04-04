@@ -499,7 +499,7 @@ function GettingData(){
                 break;
               }
             }
-            setTimeout('GettingData',1000);
+            setTimeout(GettingData,1000);
           });
         });
       });
