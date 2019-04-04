@@ -220,7 +220,6 @@ function WriteData(fileName,content){
 }
 
 function GettingData(){
-  Initialization();
   sizeSolarPanels = 0;
   sizeWindTurbines = 0;
   sizeCities = 0;
@@ -500,6 +499,7 @@ function GettingData(){
                 break;
               }
             }
+            setTimeout('GettingData',1000);
           });
         });
       });
@@ -507,6 +507,7 @@ function GettingData(){
   });
 }
 function App(){
+    Initialization();
     GettingData();
     return (
       <div className={"header"}>
