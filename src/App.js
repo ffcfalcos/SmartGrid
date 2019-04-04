@@ -149,6 +149,7 @@ let wV = 0;
 let time = 0;
 let timeTest = 0;
 let end = 0;
+let flywheelsMaxStorage = 40; //kWh
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -244,18 +245,22 @@ function GettingData(){
                   console.log("Saving power --> Charging flywheels");
                   let i;
                   for(i = 0; i < sizeFlyWheels; i++){
+                    flywheels[i].SetPower(0);
+                    let overflowP = (((overflow/3600)/1000)/flywheelsMaxStorage)*flywheels[i].GetEfficiency(); //The percentage of the overflow
                     const storage = flywheels[i].GetStorage(); //%
                     if(storage < 1){ //if the flywheel storage is not full
-                      if((storage + PowerP(overflow)) < 1){ //if the flywheel can storage all the extra power
-                        flywheels[i].UpdateStorage((((overflow/3600)/1000)/40)*flywheels[i].GetEfficiency()); //whatt --> whatt/h --> kWhatt/h
+                      if((storage + overflowP) < 1){ //if the flywheel can storage all the overflow
+                        flywheels[i].UpdateStorage(overflowP); //whatt --> whatt/h --> kWhatt/h
                         flywheels[i].SetConsumption(overflow);
                         flywheels[i].SetMode("Consumer");
                         break;
                       }
-                      else {
-                        const maxStorage = (1 - flywheels[i].GetStorage()) * 40 / 3600;
+                      else { //if the flywheel can't store all the overflow
+                        const maxStorage = (1 - flywheels[i].GetStorage()) * 40 * 3600 * flywheels[i].flywheelsMaxStorage; //whatt
                         flywheels[i].SetStorage(1);
-                        flywheels[i].SetMode("Full");
+                        flywheels[i].SetConsumption(overflow);
+                        flywheels[i].SetMode("Idle");
+                        overflow -= maxStorage/flywheels[i].GetEfficiency();
                         break;
                       }
                     }
