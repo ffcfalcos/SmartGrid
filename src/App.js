@@ -136,6 +136,8 @@ class Central {
   constructor(emission,total){
     this.emission = emission;
     this.total = total;
+    this.id = 1;
+    this.power = 0;
   }
   GetTotal(){
     return this.total;
@@ -146,6 +148,15 @@ class Central {
   UpdateTotal(add){
     this.total += add;
   }
+  GetId(){
+    return this.id;
+  }
+  SetPower(power){
+    this.power = power;
+  }
+  GetPower(){
+    return this.power;
+  }
 }
 
 let solarPanels = [];
@@ -153,7 +164,7 @@ let windTurbines = [];
 let flywheels = [];
 let cities = [];
 let barrages = [];
-let centrals[];
+let central;
 let sizeSolarPanels = 0;
 let sizeWindTurbines = 0;
 let sizeCities = 0;
@@ -163,10 +174,15 @@ let cV = 0;
 let sV = 0;
 let bV = 0;
 let wV = 0;
+let uV = 0;
 let time = 0;
 let timeTest = 0;
 let end = 0;
 let flywheelsMaxStorage = 40; //kWh
+let windSp = 0;
+let windAz = 0;
+let solarAlt = 0;
+let solarAz = 0;
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -181,22 +197,15 @@ const SOLAR_REQUEST = "http://localhost:8000/api/v1/sensors/sun";
 console.log("Setted all constant");
 
 function Initialization(){
-  console.log("Getting Flywheels");
   request(FLYWHEELS_REQUEST, function (error, response, body) {
-    console.log("Request : " + FLYWHEELS_REQUEST);
-    console.log(body);
     var data = JSON.parse(body);
     data.forEach(flywheel => {
       flywheels.push(new Flywheel(flywheel.id,flywheel.size,flywheel.efficiency,flywheel.storage,flywheel.consumption,flywheel.power,flywheel.mode));
     });
     request(CENTRAL_REQUEST, function (error, response, body) {
-    console.log("Request : " + CENTRAL_REQUEST);
-    console.log(body);
-    var data = JSON.parse(body);
-    data.forEach(central => {
-      centrals.push(new Central(central.emission,central.total));
+      var data = JSON.parse(body);
+      central = new Central(data.emission,data.total);
     });
-  });
   });
 }
 
@@ -210,19 +219,26 @@ function GettingData(){
   sV = 0;
   bV = 0;
   wV = 0;
+  uV = 0;
   solarPanels = [];
   windTurbines = [];
   barrages = [];
   cities = [];
+  request(SOLAR_REQUEST, function (error, response, body) {
+    let data = JSON.parse(body);
+    solarAlt = data.altitude;
+    solarAz = data.azimuth;
+  };
+  request(WIND_REQUEST, function (error, response, body) {
+    let data = JSON.parse(body);
+    windSp = data.speed;
+    windAz = data.azimuth;
+  };
   request(TIME_REQUEST, function (error, response, body) {
-    console.log("Request : " + TIME_REQUEST);
     let data = JSON.parse(body);
     console.log(body);
     timeTest = data.datetime;
-    console.log(body);
-    console.log("Getting Time / Actual : " + time + " / Getting : " + timeTest);
     request(WIND_TURBINE_REQUEST, function (error, response, body) {
-      console.log("Request : " + WIND_TURBINE_REQUEST);
       let data = JSON.parse(body);
       sizeWindTurbines = data.length;
       data.forEach(windTurbine => {
@@ -230,7 +246,6 @@ function GettingData(){
         windTurbines.push(new WindTurbine(windTurbine.id,windTurbine.power,windTurbine.number,windTurbine.azimuth));
       });
       request(BARRAGE_REQUEST, function (error, response, body) {
-        console.log("Request : " + BARRAGE_REQUEST);
         let data = JSON.parse(body);
         sizeBarrages = data.length;
         data.forEach(barrage => {
@@ -238,7 +253,6 @@ function GettingData(){
           barrages.push(new Barrage(barrage.id,barrage.power));
         });
         request(CITIES_REQUEST, function (error, response, body) {
-          console.log("Request : " + CITIES_REQUEST);
           let data = JSON.parse(body);
           sizeCities = data.length;
           data.forEach(city => {
@@ -246,7 +260,6 @@ function GettingData(){
             cities.push(new City(city.id,city.population,city.consumption));
           });
           request(SOLAR_PANEL_REQUEST, function (error, response, body) {
-            console.log("Request : " + SOLAR_PANEL_REQUEST);
             let data = JSON.parse(body);
             sizeSolarPanels = data.length;
             data.forEach(solarPanel => {
@@ -313,25 +326,28 @@ function GettingData(){
                       flywheels[i].UpdateStorage(0 - ((maxPower/3600)/1000)/40);
                       flywheels[i].SetMode("Producer");
                     }
-                    if (resource > 0) {
-                      console.log("Coal");
-                    }
                   }
+                  central.UpdateTotal(ressource*central.GetEmission());
+                  central.SetPower(ressource);
                 }
-                console.log("SolarPanelPower "+sV);
-                console.log("BarragePower "+bV);
-                console.log("WindTurbinePower "+wV);
-                console.log("CitiesPower "+cV);
+                console.log("Solar Panel Power : "+sV);
+                console.log("Barrage Power : "+bV);
+                console.log("Wind Turbine Power : "+wV);
+                console.log("Cities Power : "+cV);
+                console.log("Central Power : "+uV);
                 end = 1;
                 sV = Math.round(sV/1000);
                 wV = Math.round(wV/1000);
                 bV = Math.round(bV/1000);
                 cV = Math.round(cV/1000);
+                uV = Math.round(uV/1000);
                 document.getElementById("sv").textContent=sV;
                 document.getElementById("bv").textContent=bV;
                 document.getElementById("wv").textContent=wV;
                 document.getElementById("cv").textContent=cV;
-                let total_producer = sV+bV+wV;
+                document.getElementById("uv").textContent=uV;
+                let total_producer = sV+bV+wV+uV;
+                
                 if(result > 0){ //if Flywheels are consumer
                   //add flywheels power
                   document.getElementById("total_producer").textContent= total_producer;
@@ -450,6 +466,26 @@ function GettingData(){
                   let parentDiv = document.getElementById("cityParent");
                   parentDiv.insertBefore(newDiv, currentDiv);
                 });
+                let idDiv = document.createElement("p");
+                idDiv.appendChild(document.createTextNode("Central Id : "+central.GetId()));
+                let emissionDiv = document.createElement("p");
+                emissionDiv.appendChild(document.createTextNode("Emission Rate : "+central.GetEmission()*1000+" kg/kW"));
+                let powerDiv = document.createElement("p");
+                powerDiv.appendChild(document.createTextNode("Power : "+central.GetPower()/1000+" kW"));
+                let emissionIDiv = document.createElement("p");
+                emissionIDiv.appendChild(document.createTextNode("Emission : "+central.GetPower()*central.GetEmission()+" kg"));
+                let totalDiv = document.createElement("p");
+                totalDiv.appendChild(document.createTextNode("Emission : "+central.GetTotal()+" kg"));
+                let newDiv = document.createElement("div");
+                newDiv.setAttribute('class','block sub_block');
+                newDiv.appendChild(idDiv);
+                newDiv.appendChild(emissionDiv);
+                newDiv.appendChild(powerDiv);
+                newDiv.appendChild(emissionIDiv);
+                newDiv.appendChild(totalDiv);
+                let currentDiv = document.getElementById("centralEnd");
+                let parentDiv = document.getElementById("centralParent");
+                parentDiv.insertBefore(newDiv, currentDiv);
                 break;
               }
             }
@@ -510,6 +546,13 @@ function App(){
               <p>Power : <span id="fv">0</span> kW</p>
             </div>
             <div id={"flywheelEnd1"}/>
+          </div>
+          <div className={"line centralParent"} id={"centralParent"}>
+            <div id={"central"} className={"block main_block"}>
+              <p className={"block_title"}>Flywheels</p>
+              <p>Power : <span id="fv">0</span> kW</p>
+            </div>
+            <div id={"centralEnd"}/>
           </div>
         </div>
         <div id={"Consumer"} className={"Consumer"}>
