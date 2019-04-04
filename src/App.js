@@ -125,6 +125,11 @@ class Flywheel {
   GetPower(){
     return this.power;
   }
+  SetConsumption(consumption){
+    this.consumption = consumption;
+  }
+  GetEfficiency(){
+    return this.efficiency;
 }
 
 let solarPanels = [];
@@ -153,16 +158,6 @@ const FLYWHEELS_REQUEST = "http://localhost:8000/api/v1/storages/flywheels";
 const TIME_REQUEST = "http://localhost:8000/api/v1/sensors/datetime";
 
 console.log("Setted all constant");
-
-function PowerP(power){
-  return (power*3600)/40;
-}
-function PowerKW(storage){
-  return (storage*40)/3600;
-}
-function StorageP(power){
-  return (power/3600)/40;
-}
 
 function Initialization(){
   console.log("Getting Flywheels");
@@ -241,18 +236,19 @@ function GettingData(){
                 else {
                   console.log("Saving power");
                 }
-                const generation = sV + wV + bV;
-                const consumption = cV;
-                const result = generation - consumption;
-                if (result > 0){
-                  let overflow = result;
+                const generation = sV + wV + bV; //Whatt
+                const consumption = cV; //Whatt
+                const result = generation - consumption; //Whatt
+                if (result > 0){ //if we get extra power
+                  let overflow = result; //Whatt
                   console.log("Saving power --> Charging flywheels");
                   let i;
                   for(i = 0; i < sizeFlyWheels; i++){
-                    const storage = flywheels[i].GetStorage();
-                    if(storage < 1){
-                      if((storage + PowerP(overflow)) < 1){
-                        flywheels[i].UpdateStorage(PowerP(overflow));
+                    const storage = flywheels[i].GetStorage(); //%
+                    if(storage < 1){ //if the flywheel storage is not full
+                      if((storage + PowerP(overflow)) < 1){ //if the flywheel can storage all the extra power
+                        flywheels[i].UpdateStorage((((overflow/3600)/1000)/40)*flywheels[i].GetEfficiency()); //whatt --> whatt/h --> kWhatt/h
+                        flywheels[i].SetConsumption(overflow);
                         flywheels[i].SetMode("Consumer");
                         break;
                       }
