@@ -508,7 +508,7 @@ function GettingData(){
 }
 function App(){
     Initialization();
-    GettingData();
+    setInterval(GettingData,1000);
     return (
       <div className={"header"}>
         <div>
