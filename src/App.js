@@ -430,6 +430,7 @@ function GettingData(){
             document.getElementById("flywheelParent1").style.display = "";
             document.getElementById("flywheelParent2").style.display = "none";
           }
+          //Graphs creation below
           first = 0;
         });
       });
