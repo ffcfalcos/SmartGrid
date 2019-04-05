@@ -2,8 +2,16 @@ import React from 'react';
 import './App.css';
 
 const request = require('request');
-const insertLine = require('insert-line')
+const insertLine = require('insert-line');
+const Chart = require('chart');
 const d3 = require('d3');
+const recharts = require('recharts');
+const LineChart = recharts.LineChart;
+const Line = recharts.Line;
+const CartesianGrid = recharts.CartesianGrid;
+const XAxis = recharts.XAxis;
+const YAxis = recharts.YAxis;
+const Tooltip = recharts.Tooltip;
 
 class Flywheel {
   constructor(id,size,efficiency,storage,consumption,power,mode){
@@ -68,9 +76,7 @@ let windAz = 0;
 let solarAlt = 0;
 let solarAz = 0;
 let first = 1;
-let daySize = Math.round((6/7)*1680);
-let weekLabel = [];
-let dayLabel = [];
+let hour = 0;
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -97,33 +103,12 @@ function Initialization(){
       central.total = data.total;
     });
   });
-  for(let i = 0 ; i < 1680 ; i++){
-    solarData.push(0);
-    windData.push(0);
-    centralData.push(0);
-    cityData.push(0);
-    barrageData.push(0);
-    const test = i/240;
-    if(test.isInteger()){
-      weekLabel.push("J-"+test);
-    }
-    else {
-      weekLabel.push("");
-    }
-  }
-  for(let i = 0 ; i < 240 ; i++){
-    solarData.push(0);
-    windData.push(0);
-    centralData.push(0);
-    cityData.push(0);
-    barrageData.push(0);
-    const test = i/10;
-    if(test.isInteger()){
-      dayLabel.push("H-"+test);
-    }
-    else {
-      dayLabel.push("");
-    }
+  for(let i = 0 ; i < 168 ; i++){
+    solarData.push({x: '', y: 0});
+    windData.push({x: '', y: 0});
+    centralData.push({x: '', y: 0});
+    cityData.push({x: '', y: 0});
+    barrageData.push({x: '', y: 0});
   }
 }
 
@@ -169,7 +154,7 @@ function GettingData(){
   });
   request(TIME_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
-    time = data.datetime;
+    time = new Date(data.datetime);
   });
   request(SOLAR_PANEL_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
@@ -354,16 +339,22 @@ function GettingData(){
           bV = Math.round(bV / 1000);
           cV = Math.round(cV / 1000);
           uV = Math.round(uV / 1000);
-          solarData.push(sV);
-          windData.push(wV);
-          barrageData.push(bV);
-          cityData.push(cV);
-          centralData.push(uV);
-          solarData.shift();
-          windData.shift();
-          barrageData.shift();
-          cityData.shift();
-          centralData.shift();
+          const hourTest = time.getHours();
+          if(hourTest !== hour){
+            hour = hourTest;
+            solarData.push({x: time.getHours(), y: sV/1000});
+            windData.push({x: time, y: wV});
+            barrageData.push({x: time, y: bV});
+            cityData.push({x: time, y: cV});
+            centralData.push({x: time, y: uV});
+            solarData.shift();
+            windData.shift();
+            barrageData.shift();
+            cityData.shift();
+            centralData.shift();
+            console.log(solarData.slice(144));
+            //document.getElementById("solar_day").attr("data",solarData.slice(144));
+          }
           document.getElementById("speed").textContent = windSp + " m/s";
           document.getElementById("altitude").textContent = solarAlt + " °";
           document.getElementById("azimuthW").textContent = windAz + " °";
@@ -435,20 +426,6 @@ function GettingData(){
             document.getElementById("flywheelParent2").style.display = "none";
           }
           //Graphs creation below
-          
-          var solarDay = new Chart(document.getElementById('solar_day).getContext('2d'), {
-            type: 'line',
-            data: {
-              labels: dayArray,
-              datasets: [{
-                label: 'kW',
-                data: solarData.slice(daySize),
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-              }]
-            }
-          }); 
           first = 0;
         });
       });
@@ -476,8 +453,8 @@ function App(){
             <div><p>Production : <span id="co2prod">100 kg/h</span></p></div>
             <div><p>Total Production : <span id="co2total">48744 kg</span></p></div>
           </div>
-          <div>
-            <p className={"block"}>Producers <span id="total_producer1">0</span></p>
+          <div className={"block"}>
+            <p>Producers <span id="total_producer1">0</span></p>
           </div>
         </div>
         <div id={"Producer"} className={"Producer"}>
@@ -539,7 +516,12 @@ function App(){
         <p>Stats</p>
         <div id={"stats_solar"}>
           <div id={"wrap_solar_day"} className={"block graph"}>
-            <canvas id={"solar_day"}></canvas>
+            test
+            <LineChart width={600} height={300} data={solarData.slice(144)} id={"solar_day"}>
+              <Line type="monotone" dataKey="y" stroke="#8884d8" isAnimationActive={true}/>
+              <XAxis dataKey="x" />
+              <YAxis />
+            </LineChart>
           </div>
           <div id={"wrap_solar_week"} className={"block graph"}>
             <canvas id={"solar_week"}></canvas>
@@ -569,6 +551,7 @@ function App(){
             <canvas id={"central_week"}></canvas>
           </div>
         </div>
+      </div>
       </div>
     );
 }
