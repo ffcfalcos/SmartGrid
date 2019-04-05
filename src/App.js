@@ -236,7 +236,7 @@ function GettingData(){
               document.getElementById("cityP" + city.id).textContent = "Power : " + city.consumption/1000 + " kW";
               document.getElementById("cityR" + city.id).textContent = "Av Power/Pop : " + city.consumption/city.population + " W/U";
             }
-          });ee
+          });
           //Got all data, calculating
           const generation = sV + wV + bV; //Watt
           const consumption = cV; //Watt
