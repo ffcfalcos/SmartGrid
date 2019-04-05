@@ -47,7 +47,6 @@ class Flywheel {
 
 let flywheels = [];
 let central = {'id': 1, 'emission': 0, 'power': 0, 'total': 0};
-let sizeFlyWheels = 0;
 let cV = 0;
 let sV = 0;
 let bV = 0;
@@ -60,7 +59,6 @@ let windAz = 0;
 let solarAlt = 0;
 let solarAz = 0;
 let first = 1;
-let hour = 0;
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -75,7 +73,6 @@ const SOLAR_REQUEST = "http://localhost:8000/api/v1/sensors/sun";
 function Initialization(){
   request(FLYWHEELS_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
-    sizeFlyWheels++;
     data.forEach(flywheel => {
       flywheels.push(new Flywheel(flywheel.id,flywheel.size,flywheel.efficiency,flywheel.storage,flywheel.consumption,flywheel.power,flywheel.mode));
     });
