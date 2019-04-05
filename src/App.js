@@ -58,12 +58,6 @@ class Flywheel {
 }
 
 let flywheels = [];
-let solarData = [];
-let windData = [];
-let barrageData = [];
-let flywheelData = [];
-let cityData = [];
-let centralData = [];
 let central = {'id': 1, 'emission': 0, 'power': 0, 'total': 0};
 let sizeFlyWheels = 0;
 let cV = 0;
@@ -105,38 +99,7 @@ function Initialization(){
       central.total = data.total;
     });
   });
-  for(let i = 0 ; i < 168 ; i++){
-    solarData.push({x: '', y: 0});
-    windData.push({x: '', y: 0});
-    centralData.push({x: '', y: 0});
-    cityData.push({x: '', y: 0});
-    barrageData.push({x: '', y: 0});
-  }
 }
-
-/*function WriteData(fileName,content){
-  console.log("Writing in file : "+"data/"+fileName + " content : "+content);
-  insertLine("data/"+fileName).append(content);
-}*/
-
-/*function AnalyseWind(id,power,windAz,windSp){
-  let minPower;
-  let maxPower;
-  d3.csv("data/windTurbines.csv").then(function(data) {
-    data.forEach(line => {
-      if (line.id === id && (Math.abs((line.windA - windAz)/line.windA)) <= 0.05 && (Math.abs((line.windS - windSp)/line.windS) <= 0.05)){
-        if (minPower === 0 || line.power < minPower){
-          minPower = line.power;
-        }
-        if (maxPower === 0 || line.power > maxPower){
-          maxPower = line.power;
-        }
-      }
-    });
-    return power > minPower && power < maxPower;
-
-  });
-}*/
 
 function GettingData(){
   cV = 0;
@@ -333,21 +296,6 @@ function GettingData(){
           bV = Math.round(bV / 1000);
           cV = Math.round(cV / 1000);
           uV = Math.round(uV / 1000);
-          const hourTest = time.getHours();
-          if(hourTest !== hour){
-            hour = hourTest;
-            solarData.push({x: time.getHours(), y: sV/1000});
-            windData.push({x: time, y: wV});
-            barrageData.push({x: time, y: bV});
-            cityData.push({x: time, y: cV});
-            centralData.push({x: time, y: uV});
-            solarData.shift();
-            windData.shift();
-            barrageData.shift();
-            cityData.shift();
-            centralData.shift();
-            //
-          }
           document.getElementById("speed").textContent = windSp + " m/s";
           document.getElementById("altitude").textContent = solarAlt + " °";
           document.getElementById("azimuthW").textContent = windAz + " °";
