@@ -465,14 +465,14 @@ function GettingData(){
           var solarDay = new Chart(document.getElementById('solar_day).getContext('2d'), {
             type: 'line',
             data: {
-                labels: dayArray,
-                datasets: [{
-                    label: '# of Votes',
-                    data: solarData.slice(,
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
+              labels: dayArray,
+              datasets: [{
+                label: 'kW',
+                data: solarData.slice(daySize),
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+              }]
             }
           }); 
           first = 0;
