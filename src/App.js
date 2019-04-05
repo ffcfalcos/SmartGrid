@@ -2,16 +2,6 @@ import React from 'react';
 import './App.css';
 
 const request = require('request');
-const insertLine = require('insert-line');
-const Chart = require('chart');
-const d3 = require('d3');
-const recharts = require('recharts');
-const LineChart = recharts.LineChart;
-const Line = recharts.Line;
-const CartesianGrid = recharts.CartesianGrid;
-const XAxis = recharts.XAxis;
-const YAxis = recharts.YAxis;
-const Tooltip = recharts.Tooltip;
 
 class Flywheel {
   constructor(id,size,efficiency,storage,consumption,power,mode){
@@ -50,18 +40,15 @@ class Flywheel {
   SetConsumption(consumption){
     this.consumption = consumption;
   }
-  GetEfficiency() {
-    return this.efficiency;
+  GetMode(){
+    return this.mode;
+  }
+  GetSize(){
+    return this.size;
   }
 }
 
 let flywheels = [];
-let solarData = [];
-let windData = [];
-let barrageData = [];
-let flywheelData = [];
-let cityData = [];
-let centralData = [];
 let central = {'id': 1, 'emission': 0, 'power': 0, 'total': 0};
 let sizeFlyWheels = 0;
 let cV = 0;
@@ -88,8 +75,6 @@ const CENTRAL_REQUEST = "http://localhost:8000/api/v1/sensors/emissions";
 const WIND_REQUEST = "http://localhost:8000/api/v1/sensors/wind";
 const SOLAR_REQUEST = "http://localhost:8000/api/v1/sensors/sun";
 
-console.log("Set all constant");
-
 function Initialization(){
   request(FLYWHEELS_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
@@ -103,38 +88,7 @@ function Initialization(){
       central.total = data.total;
     });
   });
-  for(let i = 0 ; i < 168 ; i++){
-    solarData.push({x: '', y: 0});
-    windData.push({x: '', y: 0});
-    centralData.push({x: '', y: 0});
-    cityData.push({x: '', y: 0});
-    barrageData.push({x: '', y: 0});
-  }
 }
-
-/*function WriteData(fileName,content){
-  console.log("Writing in file : "+"data/"+fileName + " content : "+content);
-  insertLine("data/"+fileName).append(content);
-}*/
-
-/*function AnalyseWind(id,power,windAz,windSp){
-  let minPower;
-  let maxPower;
-  d3.csv("data/windTurbines.csv").then(function(data) {
-    data.forEach(line => {
-      if (line.id === id && (Math.abs((line.windA - windAz)/line.windA)) <= 0.05 && (Math.abs((line.windS - windSp)/line.windS) <= 0.05)){
-        if (minPower === 0 || line.power < minPower){
-          minPower = line.power;
-        }
-        if (maxPower === 0 || line.power > maxPower){
-          maxPower = line.power;
-        }
-      }
-    });
-    return power > minPower && power < maxPower;
-
-  });
-}*/
 
 function GettingData(){
   cV = 0;
@@ -142,6 +96,8 @@ function GettingData(){
   bV = 0;
   wV = 0;
   uV = 0;
+  let fv1 = 0;
+  let fv2 = 0;
   request(SOLAR_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
     solarAlt = Math.round((data.altitude*180)/6.28);
@@ -282,56 +238,45 @@ function GettingData(){
           const result = generation - consumption; //Watt
           if (result > 0) { //if we get extra power
             let overflow = result; //Watt
-            console.log("Saving power --> Charging flywheels");
             flywheels.forEach( flywheel => {
-              let overflowP = (((overflow / 360) / 1000) / flywheelsMaxStorage) * flywheel.GetEfficiency(); //The percentage of the overflow
               const storage = flywheel.GetStorage(); //%
-              console.log("Storage : "+storage);
               if (storage < 1 && overflow > 0) { //if the flywheel storage is not full
-                console.log('--> First Flywheel is not full');
-                if ((storage + overflowP) < 1) { //if the flywheel can store all the overflow
-                  console.log('--> This Flywheel can save all : ' + overflowP);
-                  flywheel.UpdateStorage(overflowP*0.98); //Watt --> Watt/h --> kWatt/h
-                  flywheel.SetConsumption(overflow);
-                  flywheel.SetMode("Consumer");
-                  overflow = 0;
-                } else { //if the flywheel can't store all the overflow
-                  const maxStorage = (1 - flywheel.GetStorage()) * 40 * 360 * flywheelsMaxStorage; //Watt
-                  flywheel.SetStorage(1);
-                  flywheel.SetConsumption(overflow);
-                  flywheel.SetMode("Idle");
-                  overflow -= maxStorage;
-                }
+                const maxConso = Math.min(40000,40000*10*(1-storage));
+                flywheel.UpdateStorage(maxConso/400000); //Watt --> Watt/h --> kWatt/h
+                flywheel.SetConsumption(maxConso);
+                fv1 += maxConso;
+                flywheel.SetMode("Consumer");
+                overflow -= maxConso;
+              }
+              if (storage === 1){
+                flywheel.SetConsumption(0);
+                flywheel.SetMode("Idle");
               }
             });
           }
           else { //not enough power from producer
             let resource = Math.abs(result); //power needed in Watt
-            console.log("Missing " + resource / 1000 + "kW");
             flywheels.forEach( flywheel => {
-              let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 360 * 1000; //power of the flywheel in Watt
-              if (maxPower > 40000) {
-                maxPower = 40000; //Setting max power in Watt
-              }
-              flywheel.SetPower(maxPower);
-              if (resource > 0) {
-                if (resource <= maxPower) { //if this flywheel has enough for power
-                  flywheel.UpdateStorage(0 - ((maxPower / 360) / 1000) / 40);
-                  flywheel.SetMode("Producer");
-                  resource = 0;
-                } else {
-                  resource -= maxPower;
-                  flywheel.UpdateStorage(0 - ((maxPower / 360) / 1000) / 40);
-                  flywheel.SetMode("Producer");
+              if(flywheel.GetStorage() > 0) {
+                let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 360 * 1000; //power of the flywheel in Watt
+                if (maxPower > 40000) {
+                  maxPower = 40000;
                 }
+                fv2 += Math.max(Math.round(maxPower), 0);
+                flywheel.SetPower(Math.max(Math.round(maxPower), 0));
+                flywheel.UpdateStorage(Math.min((-1) * maxPower / 400000), 0); //Watt --> Watt/h --> kWatt/h
+                flywheel.SetMode("Producer");
+                resource -= maxPower;
               }
+              else {
+                flywheel.SetMode("Producer");
+                flywheel.SetPower(0);
+              }
+
             });
             central.total = central.total + (resource * central.emission);
             central.power = resource;
             uV = resource;
-            if(resource > 0) {
-              console.log("--> Getting resource from coal : " + resource);
-            }
           }
           const total_producer = Math.round((generation + uV)/1000);
           sV = Math.round(sV / 1000);
@@ -339,22 +284,6 @@ function GettingData(){
           bV = Math.round(bV / 1000);
           cV = Math.round(cV / 1000);
           uV = Math.round(uV / 1000);
-          const hourTest = time.getHours();
-          if(hourTest !== hour){
-            hour = hourTest;
-            solarData.push({x: time.getHours(), y: sV/1000});
-            windData.push({x: time, y: wV});
-            barrageData.push({x: time, y: bV});
-            cityData.push({x: time, y: cV});
-            centralData.push({x: time, y: uV});
-            solarData.shift();
-            windData.shift();
-            barrageData.shift();
-            cityData.shift();
-            centralData.shift();
-            console.log(solarData.slice(144));
-            //document.getElementById("solar_day").attr("data",solarData.slice(144));
-          }
           document.getElementById("speed").textContent = windSp + " m/s";
           document.getElementById("altitude").textContent = solarAlt + " °";
           document.getElementById("azimuthW").textContent = windAz + " °";
@@ -364,31 +293,42 @@ function GettingData(){
           document.getElementById("wv").textContent = wV;
           document.getElementById("cv").textContent = cV;
           document.getElementById("uv").textContent = uV;
-          document.getElementById("date").textContent = time;
+          document.getElementById("date").textContent = time.toString().slice(0,24);
           document.getElementById('total_producer1').textContent = total_producer + " kW";
           document.getElementById('total_producer2').textContent = total_producer + " kW";
-          console.log("First : " + first);
+          document.getElementById("fv1").textContent = fv1 + " kW";
+          document.getElementById("fv2").textContent = fv2 + " kW";
           flywheels.forEach(flywheel => {
             if (first === 1) {
               let idDiv = document.createElement("p");
               idDiv.appendChild(document.createTextNode("Flywheel Id : " + flywheel.GetId()));
               let powerDiv = document.createElement("p");
               powerDiv.appendChild(document.createTextNode("Consumption : " + Math.round(flywheel.GetConsumption()/1000) + " kW"));
-              powerDiv.setAttribute('id', 'flyP2' + flywheel.GetId())
+              powerDiv.setAttribute('id', 'flyP2' + flywheel.GetId());
               let storageDiv = document.createElement("p");
-              storageDiv.appendChild(document.createTextNode("Storage : " + flywheel.GetStorage() + " %"));
-              storageDiv.setAttribute('id', 'flyS2' + flywheel.GetId())
+              storageDiv.appendChild(document.createTextNode("Storage : " + Math.round(flywheel.GetStorage()*100) + " %"));
+              storageDiv.setAttribute('id', 'flyS2' + flywheel.GetId());
+              let modeDiv = document.createElement("p");
+              modeDiv.appendChild(document.createTextNode("Mode : " + flywheel.GetMode()));
+              modeDiv.setAttribute('id', 'flyM2' + flywheel.GetId());
+              let sizeDiv = document.createElement("p");
+              sizeDiv.appendChild(document.createTextNode("Size : " + flywheel.GetSize()));
+              sizeDiv.setAttribute('id', 'flyI2' + flywheel.GetId());
               let newDiv = document.createElement("div");
               newDiv.setAttribute('class', 'block sub_block');
               newDiv.appendChild(idDiv);
               newDiv.appendChild(powerDiv);
               newDiv.appendChild(storageDiv);
+              newDiv.appendChild(modeDiv);
+              newDiv.appendChild(sizeDiv);
               let currentDiv = document.getElementById("flywheelEnd2");
               let parentDiv = document.getElementById("flywheelParent2");
               parentDiv.insertBefore(newDiv, currentDiv);
-            } else {
+            }
+            else {
               document.getElementById('flyP2' + flywheel.GetId()).textContent = "Consumption : " + Math.round(flywheel.GetConsumption()/1000) + " kW";
-              document.getElementById('flyS2' + flywheel.GetId()).textContent = "Storage : " + flywheel.GetStorage() + " %";
+              document.getElementById('flyS2' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage()*100) + " %";
+              document.getElementById('flyM2' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
             }
           });
           flywheels.forEach(flywheel => {
@@ -397,21 +337,30 @@ function GettingData(){
               idDiv.appendChild(document.createTextNode("Flywheel Id : " + flywheel.GetId()));
               let powerDiv = document.createElement("p");
               powerDiv.appendChild(document.createTextNode("Power : " + flywheel.GetPower('k') + " kW"));
-              powerDiv.setAttribute('id', 'flyP1' + flywheel.GetId())
+              powerDiv.setAttribute('id', 'flyP1' + flywheel.GetId());
               let storageDiv = document.createElement("p");
-              storageDiv.appendChild(document.createTextNode("Storage : " + flywheel.GetStorage() + " %"));
-              storageDiv.setAttribute('id', 'flyS1' + flywheel.GetId())
+              storageDiv.appendChild(document.createTextNode("Storage : " + Math.round(flywheel.GetStorage()*100) + " %"));
+              storageDiv.setAttribute('id', 'flyS1' + flywheel.GetId());
+              let modeDiv = document.createElement("p");
+              modeDiv.appendChild(document.createTextNode("Mode : " + flywheel.GetMode()));
+              modeDiv.setAttribute('id', 'flyM1' + flywheel.GetId());
+              let sizeDiv = document.createElement("p");
+              sizeDiv.appendChild(document.createTextNode("Size : " + flywheel.GetSize()));
+              sizeDiv.setAttribute('id', 'flyI1' + flywheel.GetId());
               let newDiv = document.createElement("div");
               newDiv.setAttribute('class', 'block sub_block');
               newDiv.appendChild(idDiv);
               newDiv.appendChild(powerDiv);
               newDiv.appendChild(storageDiv);
+              newDiv.appendChild(modeDiv);
+              newDiv.appendChild(sizeDiv);
               let currentDiv = document.getElementById("flywheelEnd1");
               let parentDiv = document.getElementById("flywheelParent1");
               parentDiv.insertBefore(newDiv, currentDiv);
             } else {
               document.getElementById('flyP1' + flywheel.GetId()).textContent = "Power : " + flywheel.GetPower()/1000 + " kW";
-              document.getElementById('flyS1' + flywheel.GetId()).textContent = "Storage : " + flywheel.GetStorage() + " %";
+              document.getElementById('flyS1' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage()*100) + " %";
+              document.getElementById('flyM1' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
             }
           });
           if (result > 0) { //if Flywheels are consumer
@@ -421,7 +370,6 @@ function GettingData(){
             document.getElementById("flywheelParent1").style.display = "none";
           }
           else {
-            console.log('Flywheels are producer');
             document.getElementById("flywheelParent1").style.display = "";
             document.getElementById("flywheelParent2").style.display = "none";
           }
@@ -433,9 +381,9 @@ function GettingData(){
   });
 }
 function App(){
-    Initialization();
-    setInterval(GettingData,1000);
-    return (
+  Initialization();
+  setInterval(GettingData,1000);
+  return (
       <div className={"overall"}>
         <div className={"header"}>
           <div id="local" className="block local">
@@ -483,12 +431,12 @@ function App(){
           <div className={"line flywheelParent"} id={"flywheelParent1"}>
             <div id={"flywheel"} className={"block main_block"}>
               <p className={"block_title"}>Flywheels</p>
-              <p>Power : <span id="fv">0</span> kW</p>
+              <p>Power : <span id="fv1">-</span></p>
             </div>
             <div id={"flywheelEnd1"}/>
           </div>
           <div className={"line centralParent"} id={"centralParent"}>
-            <div id={"central"} className={"block main_block"}>
+            <div id={"central"} className={"block main_block2"}>
               <p className={"block_title"}>Coal Central</p>
               <p>Power : <span id="uv">0</span> kW</p>
             </div>
@@ -498,62 +446,22 @@ function App(){
         <div id={"Consumer"} className={"Consumer"}>
           <p className={"title"}>Consumers</p>
           <div className={"line"} id={"cityParent"}>
-            <div id={"city"} className={"block main_block"}>
+            <div id={"city"} className={"block main_block2"}>
               <p className={"block_title"}>Cities</p>
-              <p>Power : <span id="cv">0</span> kW</p>
+              <p>Consumption : <span id="cv">0</span> kW</p>
             </div>
             <div id={"cityEnd"}/>
           </div>
           <div className={"line flywheelParent"} id={"flywheelParent2"}>
             <div id={"flywheel"} className={"block main_block"}>
               <p className={"block_title"}>Flywheels</p>
-              <p>Power : <span id="fv">0</span> kW</p>
+              <p>Consumption : <span id="fv2">-</span></p>
             </div>
             <div id={"flywheelEnd2"}/>
           </div>
         </div>
-        <div id={"Stats"}>
-        <p>Stats</p>
-        <div id={"stats_solar"}>
-          <div id={"wrap_solar_day"} className={"block graph"}>
-            test
-            <LineChart width={600} height={300} data={solarData.slice(144)} id={"solar_day"}>
-              <Line type="monotone" dataKey="y" stroke="#8884d8" isAnimationActive={true}/>
-              <XAxis dataKey="x" />
-              <YAxis />
-            </LineChart>
-          </div>
-          <div id={"wrap_solar_week"} className={"block graph"}>
-            <canvas id={"solar_week"}></canvas>
-          </div>
-        </div>
-        <div id={"stats_wind"}>
-          <div id={"wrap_wind_day"} className={"block graph"}>
-            <canvas id={"wind_day"}></canvas>
-          </div>
-          <div id={"wrap_wind_week"} className={"block graph"}>
-            <canvas id={"wind_week"}></canvas>
-          </div>
-        </div>
-        <div id={"stats_barrage"}>
-          <div id={"wrap_barrage_day"} className={"block graph"}>
-            <canvas id={"barrage_day"}></canvas>
-          </div>
-          <div id={"wrap_barrage_week"} className={"block graph"}>
-            <canvas id={"barrage_week"}></canvas>
-          </div>
-        </div>
-        <div id={"stats_central"}>
-          <div id={"wrap_central_day"} className={"block graph"}>
-            <canvas id={"central_day"}></canvas>
-          </div>
-          <div id={"wrap_central_week"} className={"block graph"}>
-            <canvas id={"central_week"}></canvas>
-          </div>
-        </div>
       </div>
-      </div>
-    );
+  );
 }
 
 export default App;
