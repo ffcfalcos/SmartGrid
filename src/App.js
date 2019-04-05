@@ -1,13 +1,7 @@
 import React from 'react';
-import ReactDOM from 'react-dom'
 import './App.css';
 
 const request = require('request');
-const insertLine = require('insert-line');
-const Chart = require('chart');
-const d3 = require('d3');
-const recharts = require('recharts');
-const {ResponsiveContainer, ComposedChart, LineChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend} = recharts;
 
 class Flywheel {
   constructor(id,size,efficiency,storage,consumption,power,mode){
@@ -28,9 +22,6 @@ class Flywheel {
   SetPower(power){
     this.power = power;
   }
-  SetStorage(storage){
-    this.storage = storage;
-  }
   GetStorage(){
     return this.storage;
   }
@@ -45,9 +36,6 @@ class Flywheel {
   }
   SetConsumption(consumption){
     this.consumption = consumption;
-  }
-  GetEfficiency() {
-    return this.efficiency;
   }
   GetMode(){
     return this.mode;
@@ -83,8 +71,6 @@ const TIME_REQUEST = "http://localhost:8000/api/v1/sensors/datetime";
 const CENTRAL_REQUEST = "http://localhost:8000/api/v1/sensors/emissions";
 const WIND_REQUEST = "http://localhost:8000/api/v1/sensors/wind";
 const SOLAR_REQUEST = "http://localhost:8000/api/v1/sensors/sun";
-
-console.log("Set all constant");
 
 function Initialization(){
   request(FLYWHEELS_REQUEST, function (error, response, body) {
@@ -209,10 +195,13 @@ function GettingData(){
             let powerDiv = document.createElement("p");
             powerDiv.appendChild(document.createTextNode("Power : " + barrage.power/1000000 + " MW"));
             powerDiv.setAttribute('id','barrageP'+barrage.id);
+            let locationDiv = document.createElement("p");
+            locationDiv.appendChild(document.createTextNode("Location : Unknown"));
             let newDiv = document.createElement("div");
             newDiv.setAttribute('class', 'block sub_block');
             newDiv.appendChild(idDiv);
             newDiv.appendChild(powerDiv);
+            newDiv.appendChild(locationDiv);
             let currentDiv = document.getElementById("barrageEnd");
             let parentDiv = document.getElementById("barrageParent");
             parentDiv.insertBefore(newDiv, currentDiv);
@@ -232,15 +221,23 @@ function GettingData(){
               let powerDiv = document.createElement("p");
               powerDiv.appendChild(document.createTextNode("Power : " + city.consumption/1000 + " kW"));
               powerDiv.setAttribute('id', 'cityP' + city.id);
+              let popDiv = document.createElement("p");
+              popDiv.appendChild(document.createTextNode("Population : " + city.population));
+              let rate = document.createElement("p");
+              rate.appendChild(document.createTextNode("Rate : " + Math.round(city.consumption/city.population) + " W/U"));
+              rate.setAttribute('id', 'cityR' + city.id);
               let newDiv = document.createElement("div");
               newDiv.setAttribute('class', 'block sub_block');
               newDiv.appendChild(idDiv);
               newDiv.appendChild(powerDiv);
+              newDiv.appendChild(popDiv);
+              newDiv.appendChild(rate);
               let currentDiv = document.getElementById("cityEnd");
               let parentDiv = document.getElementById("cityParent");
               parentDiv.insertBefore(newDiv, currentDiv);
             } else {
               document.getElementById("cityP" + city.id).textContent = "Power : " + city.consumption/1000 + " kW";
+              document.getElementById("cityR" + city.id).textContent = "Av Power/Pop : " + city.consumption/city.population + " W/U";
             }
           });
           //Got all data, calculating
@@ -251,7 +248,6 @@ function GettingData(){
             let overflow = result; //Watt
             flywheels.forEach( flywheel => {
               const storage = flywheel.GetStorage(); //%
-              console.log("Storage : "+storage);
               if (storage < 1 && overflow > 0) { //if the flywheel storage is not full
                 const maxConso = Math.min(40000,40000*10*(1-storage));
                 flywheel.UpdateStorage(maxConso/400000); //Watt --> Watt/h --> kWatt/h
@@ -393,9 +389,9 @@ function GettingData(){
   });
 }
 function App(){
-    Initialization();
-    setInterval(GettingData,1000);
-    return (
+  Initialization();
+  setInterval(GettingData,1000);
+  return (
       <div className={"overall"}>
         <div className={"header"}>
           <div id="local" className="block local">
@@ -473,7 +469,7 @@ function App(){
           </div>
         </div>
       </div>
-    );
+  );
 }
 
 export default App;
