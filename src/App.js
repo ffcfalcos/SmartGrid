@@ -282,7 +282,7 @@ function GettingData(){
             central.total = central.total + (resource * central.emission);
             central.power = resource;
             uV = resource;
-          }
+          }ee
           const total_producer = Math.round((generation + uV)/1000);
           sV = Math.round(sV / 1000);
           wV = Math.round(wV / 1000);
