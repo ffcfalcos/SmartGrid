@@ -198,10 +198,13 @@ function GettingData(){
             let powerDiv = document.createElement("p");
             powerDiv.appendChild(document.createTextNode("Power : " + barrage.power/1000000 + " MW"));
             powerDiv.setAttribute('id','barrageP'+barrage.id);
+            let locationDiv = document.createElement("p");
+            locationDiv.appendChild(document.createTextNode("Location : Unknown"));
             let newDiv = document.createElement("div");
             newDiv.setAttribute('class', 'block sub_block');
             newDiv.appendChild(idDiv);
             newDiv.appendChild(powerDiv);
+            newDiv.appendChild(locationDiv);
             let currentDiv = document.getElementById("barrageEnd");
             let parentDiv = document.getElementById("barrageParent");
             parentDiv.insertBefore(newDiv, currentDiv);
@@ -221,15 +224,23 @@ function GettingData(){
               let powerDiv = document.createElement("p");
               powerDiv.appendChild(document.createTextNode("Power : " + city.consumption/1000 + " kW"));
               powerDiv.setAttribute('id', 'cityP' + city.id);
+              let popDiv = document.createElement("p");
+              popDiv.appendChild(document.createTextNode("Population : " + city.population));
+              let rate = document.createElement("p");
+              rate.appendChild(document.createTextNode("Rate : " + Math.round(city.consumption/city.population) + " W/U"));
+              rate.setAttribute('id', 'cityR' + city.id);
               let newDiv = document.createElement("div");
               newDiv.setAttribute('class', 'block sub_block');
               newDiv.appendChild(idDiv);
               newDiv.appendChild(powerDiv);
+              newDiv.appendChild(popDiv);
+              newDiv.appendChild(rate);
               let currentDiv = document.getElementById("cityEnd");
               let parentDiv = document.getElementById("cityParent");
               parentDiv.insertBefore(newDiv, currentDiv);
             } else {
               document.getElementById("cityP" + city.id).textContent = "Power : " + city.consumption/1000 + " kW";
+              document.getElementById("cityR" + city.id).textContent = "Av Power/Pop : " + city.consumption/city.population + " W/U";
             }
           });
           //Got all data, calculating
