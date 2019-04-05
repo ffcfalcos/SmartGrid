@@ -286,6 +286,7 @@ function GettingData(){
               document.getElementById("cityP" + city.id).textContent = "Power : " + city.consumption/1000 + " kW";
             }
           });
+          //Got all data, calculating
           const generation = sV + wV + bV; //Watt
           const consumption = cV; //Watt
           const result = generation - consumption; //Watt
@@ -298,7 +299,7 @@ function GettingData(){
               console.log("Storage : "+storage);
               if (storage < 1 && overflow > 0) { //if the flywheel storage is not full
                 console.log('--> First Flywheel is not full');
-                if ((storage + overflowP) < 1) { //if the flywheel can storage all the overflow
+                if ((storage + overflowP) < 1) { //if the flywheel can store all the overflow
                   console.log('--> This Flywheel can save all : ' + overflowP);
                   flywheel.UpdateStorage(overflowP*0.98); //Watt --> Watt/h --> kWatt/h
                   flywheel.SetConsumption(overflow);
