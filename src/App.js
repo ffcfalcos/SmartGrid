@@ -46,33 +46,6 @@ class Flywheel {
     return this.efficiency;
   }
 }
-  
-class Central {
-  constructor(emission,total){
-    this.emission = emission;
-    this.total = total;
-    this.id = 1;
-    this.power = 0;
-  }
-  GetTotal(){
-    return this.total;
-  }
-  GetEmission(){
-    return this.emission;
-  }
-  UpdateTotal(add){
-    this.total += add;
-  }
-  GetId(){
-    return this.id;
-  }
-  SetPower(power){
-    this.power = power;
-  }
-  GetPower(){
-    return this.power;
-  }
-}
 
 let flywheels = [];
 let solarData = [];
@@ -81,7 +54,7 @@ let barrageData = [];
 let flywheelData = [];
 let cityData = [];
 let centralData = [];
-let central;
+let central = {'id': 1, 'emission': 0, 'power': 0, 'total': 0};
 let sizeFlyWheels = 0;
 let cV = 0;
 let sV = 0;
@@ -120,7 +93,8 @@ function Initialization(){
     });
     request(CENTRAL_REQUEST, function (error, response, body) {
       let data = JSON.parse(body);
-      central = new Central(data.emission,data.total);
+      central.emission = data.emission;
+      central.total = data.total;
     });
   });
   for(let i = 0 ; i < 1680 ; i++){
@@ -367,8 +341,8 @@ function GettingData(){
                 }
               }
             });
-            central.UpdateTotal(resource * central.GetEmission());
-            central.SetPower(resource);
+            central.total = central.total + (resource * central.emission);
+            central.power = resource;
             uV = resource;
             if(resource > 0) {
               console.log("--> Getting resource from coal : " + resource);
