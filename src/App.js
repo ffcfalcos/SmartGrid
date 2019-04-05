@@ -95,6 +95,9 @@ let windAz = 0;
 let solarAlt = 0;
 let solarAz = 0;
 let first = 1;
+let daySize = Math.round((6/7)*1680);
+let weekLabel = [];
+let dayLabel = [];
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -120,6 +123,34 @@ function Initialization(){
       central = new Central(data.emission,data.total);
     });
   });
+  for(let i = 0 ; i < 1680 ; i++){
+    solarData.push(0);
+    windData.push(0);
+    centralData.push(0);
+    cityData.push(0);
+    barrageData.push(0);
+    const test = i/240;
+    if(test.isInteger()){
+      weekLabel.push("J-"+test);
+    }
+    else {
+      weekLabel.push("");
+    }
+  }
+  for(let i = 0 ; i < 240 ; i++){
+    solarData.push(0);
+    windData.push(0);
+    centralData.push(0);
+    cityData.push(0);
+    barrageData.push(0);
+    const test = i/10;
+    if(test.isInteger()){
+      dayLabel.push("H-"+test);
+    }
+    else {
+      dayLabel.push("");
+    }
+  }
 }
 
 /*function WriteData(fileName,content){
@@ -354,13 +385,11 @@ function GettingData(){
           barrageData.push(bV);
           cityData.push(cV);
           centralData.push(uV);
-          if (solarData.length > 1680) {
-            solarData.shift();
-            windData.shift();
-            barrageData.shift();
-            cityData.shift();
-            centralData.shift();
-          }
+          solarData.shift();
+          windData.shift();
+          barrageData.shift();
+          cityData.shift();
+          centralData.shift();
           document.getElementById("speed").textContent = windSp + " m/s";
           document.getElementById("altitude").textContent = solarAlt + " °";
           document.getElementById("azimuthW").textContent = windAz + " °";
@@ -432,6 +461,20 @@ function GettingData(){
             document.getElementById("flywheelParent2").style.display = "none";
           }
           //Graphs creation below
+          
+          var solarDay = new Chart(document.getElementById('solar_day).getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: dayArray,
+                datasets: [{
+                    label: '# of Votes',
+                    data: solarData.slice(,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            }
+          }); 
           first = 0;
         });
       });
