@@ -75,6 +75,12 @@ class Central {
 }
 
 let flywheels = [];
+let solarData = [];
+let windData = [];
+let barrageData = [];
+let flywheelData = [];
+let cityData = [];
+let centralData = [];
 let central;
 let sizeFlyWheels = 0;
 let cV = 0;
@@ -342,6 +348,18 @@ function GettingData(){
           bV = Math.round(bV / 1000);
           cV = Math.round(cV / 1000);
           uV = Math.round(uV / 1000);
+          solarData.push(sV);
+          windData.push(wV);
+          barrageData.push(bV);
+          cityData.push(cV);
+          centralData.push(uV);
+          if (solarData.length > 1680) {
+            solarData.shift();
+            windData.shift();
+            barrageData.shift();
+            cityData.shift();
+            centralData.shift();
+          }
           document.getElementById("speed").textContent = windSp + " m/s";
           document.getElementById("altitude").textContent = solarAlt + " °";
           document.getElementById("azimuthW").textContent = windAz + " °";
