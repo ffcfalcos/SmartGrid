@@ -518,6 +518,37 @@ function App(){
         </div>
         <div id={"Stats"}>
         <p>Stats</p>
+        <div id={"stats_solar"}>
+          <div id={"wrap_solar_day"} className={"block graph"}>
+            <canvas id={"solar_day"}></canvas>
+          </div>
+          <div id={"wrap_solar_week"} className={"block graph"}>
+            <canvas id={"solar_week"}></canvas>
+          </div>
+        </div>
+        <div id={"stats_wind"}>
+          <div id={"wrap_wind_day"} className={"block graph"}>
+            <canvas id={"wind_day"}></canvas>
+          </div>
+          <div id={"wrap_wind_week"} className={"block graph"}>
+            <canvas id={"wind_week"}></canvas>
+          </div>
+        </div>
+        <div id={"stats_barrage"}>
+          <div id={"wrap_barrage_day"} className={"block graph"}>
+            <canvas id={"barrage_day"}></canvas>
+          </div>
+          <div id={"wrap_barrage_week"} className={"block graph"}>
+            <canvas id={"barrage_week"}></canvas>
+          </div>
+        </div>
+        <div id={"stats_central"}>
+          <div id={"wrap_central_day"} className={"block graph"}>
+            <canvas id={"central_day"}></canvas>
+          </div>
+          <div id={"wrap_central_week"} className={"block graph"}>
+            <canvas id={"central_week"}></canvas>
+          </div>
         </div>
       </div>
     );
