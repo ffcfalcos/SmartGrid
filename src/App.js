@@ -47,18 +47,6 @@ class Flywheel {
 
 let flywheels = [];
 let central = {'id': 1, 'emission': 0, 'power': 0, 'total': 0};
-let cV = 0;
-let sV = 0;
-let bV = 0;
-let wV = 0;
-let uV = 0;
-let time = 0;
-let flywheelsMaxStorage = 40; //kWh
-let windSp = 0;
-let windAz = 0;
-let solarAlt = 0;
-let solarAz = 0;
-let first = 1;
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -75,21 +63,182 @@ function Initialization(){
     let data = JSON.parse(body);
     data.forEach(flywheel => {
       flywheels.push(new Flywheel(flywheel.id,flywheel.size,flywheel.efficiency,flywheel.storage,flywheel.consumption,flywheel.power,flywheel.mode));
+      let idDiv = document.createElement("p");
+      idDiv.appendChild(document.createTextNode("Flywheel Id : " + flywheel.id));
+      let powerDiv = document.createElement("p");
+      powerDiv.appendChild(document.createTextNode("Consumption : " + Math.round(flywheel.consumption/1000) + " kW"));
+      powerDiv.setAttribute('id', 'flyP2' + flywheel.id);
+      let storageDiv = document.createElement("p");
+      storageDiv.appendChild(document.createTextNode("Storage : " + Math.round(flywheel.storage*100) + " %"));
+      storageDiv.setAttribute('id', 'flyS2' + flywheel.id);
+      let modeDiv = document.createElement("p");
+      modeDiv.appendChild(document.createTextNode("Mode : " + flywheel.mode));
+      modeDiv.setAttribute('id', 'flyM2' + flywheel.id);
+      let sizeDiv = document.createElement("p");
+      sizeDiv.appendChild(document.createTextNode("Size : " + flywheel.size));
+      sizeDiv.setAttribute('id', 'flyI2' + flywheel.id);
+      let newDiv = document.createElement("div");
+      newDiv.setAttribute('class', 'block sub_block');
+      newDiv.appendChild(idDiv);
+      newDiv.appendChild(powerDiv);
+      newDiv.appendChild(storageDiv);
+      newDiv.appendChild(modeDiv);
+      newDiv.appendChild(sizeDiv);
+      let currentDiv = document.getElementById("flywheelEnd2");
+      let parentDiv = document.getElementById("flywheelParent2");
+      parentDiv.insertBefore(newDiv, currentDiv);
+      let idDiv2 = document.createElement("p");
+      idDiv2.appendChild(document.createTextNode("Flywheel Id : " + flywheel.id));
+      let powerDiv2 = document.createElement("p");
+      powerDiv2.appendChild(document.createTextNode("Power : " + flywheel.power/1000 + " kW"));
+      powerDiv2.setAttribute('id', 'flyP1' + flywheel.id);
+      let storageDiv2 = document.createElement("p");
+      storageDiv2.appendChild(document.createTextNode("Storage : " + Math.round(flywheel.storage*100) + " %"));
+      storageDiv2.setAttribute('id', 'flyS1' + flywheel.id);
+      let modeDiv2 = document.createElement("p");
+      modeDiv2.appendChild(document.createTextNode("Mode : " + flywheel.mode));
+      modeDiv2.setAttribute('id', 'flyM1' + flywheel.id);
+      let sizeDiv2 = document.createElement("p");
+      sizeDiv2.appendChild(document.createTextNode("Size : " + flywheel.size));
+      sizeDiv2.setAttribute('id', 'flyI1' + flywheel.id);
+      let newDiv2 = document.createElement("div");
+      newDiv2.setAttribute('class', 'block sub_block');
+      newDiv2.appendChild(idDiv2);
+      newDiv2.appendChild(powerDiv2);
+      newDiv2.appendChild(storageDiv2);
+      newDiv2.appendChild(modeDiv2);
+      newDiv2.appendChild(sizeDiv2);
+      let currentDiv2 = document.getElementById("flywheelEnd1");
+      let parentDiv2 = document.getElementById("flywheelParent1");
+      parentDiv2.insertBefore(newDiv2, currentDiv2);
     });
     request(CENTRAL_REQUEST, function (error, response, body) {
       let data = JSON.parse(body);
       central.emission = data.emission;
       central.total = data.total;
+      request(CITIES_REQUEST, function (error, response, body) {
+        let data = JSON.parse(body);
+        data.forEach(city => {
+          let idDiv = document.createElement("p");
+          idDiv.appendChild(document.createTextNode("City Id : " + city.id));
+          idDiv.setAttribute('id', 'cityI' + city.id);
+          let powerDiv = document.createElement("p");
+          powerDiv.appendChild(document.createTextNode("Power : " + city.consumption / 1000 + " kW"));
+          powerDiv.setAttribute('id', 'cityP' + city.id);
+          let popDiv = document.createElement("p");
+          popDiv.appendChild(document.createTextNode("Population : " + city.population));
+          let rate = document.createElement("p");
+          rate.appendChild(document.createTextNode("Rate : " + Math.round(city.consumption / city.population) + " W/U"));
+          rate.setAttribute('id', 'cityR' + city.id);
+          let newDiv = document.createElement("div");
+          newDiv.setAttribute('class', 'block sub_block');
+          newDiv.appendChild(idDiv);
+          newDiv.appendChild(powerDiv);
+          newDiv.appendChild(popDiv);
+          newDiv.appendChild(rate);
+          let currentDiv = document.getElementById("cityEnd");
+          let parentDiv = document.getElementById("cityParent");
+          parentDiv.insertBefore(newDiv, currentDiv);
+        });
+        request(SOLAR_PANEL_REQUEST, function (error, response, body) {
+          let data = JSON.parse(body);
+          data.forEach(solarPanel => {
+            let rate = Math.round(solarPanel.power / solarPanel.size);
+            let power = Math.round(solarPanel.power/ 1000);
+            let idDiv = document.createElement("p");
+            idDiv.textContent = "Solar Panel Id : " + solarPanel.id;
+            idDiv.setAttribute('id', 'solarI' + solarPanel.id);
+            let powerDiv = document.createElement("p");
+            powerDiv.textContent = "Power : " + power + " kW";
+            powerDiv.setAttribute('id', 'solarP' + solarPanel.id);
+            let rateDiv = document.createElement("p");
+            rateDiv.setAttribute('id', 'solarR' + solarPanel.id);
+            rateDiv.textContent = "Average : " + rate + " W/m²";
+            let sizeDiv = document.createElement('p');
+            sizeDiv.setAttribute('id', 'solarS' + solarPanel.id);
+            sizeDiv.textContent = "Size : " + solarPanel.size + " m²";
+            let azimuthDiv = document.createElement('p');
+            azimuthDiv.setAttribute('id', 'solarA' + solarPanel.id);
+            azimuthDiv.textContent = "Azimuth : " + Math.round((solarPanel.azimuth*180)/6.28) + " °";
+            let newDiv = document.createElement("div");
+            newDiv.setAttribute('class', 'block sub_block');
+            newDiv.appendChild(idDiv);
+            newDiv.appendChild(powerDiv);
+            newDiv.appendChild(sizeDiv);
+            newDiv.appendChild(rateDiv);
+            newDiv.appendChild(azimuthDiv);
+            let currentDiv = document.getElementById("solarEnd");
+            let parentDiv = document.getElementById("solarParent");
+            parentDiv.insertBefore(newDiv, currentDiv);
+          });
+          request(WIND_TURBINE_REQUEST, function (error, response, body) {
+            let data = JSON.parse(body);
+            data.forEach(windTurbine => {
+              let idDiv = document.createElement("p");
+              idDiv.appendChild(document.createTextNode("Wind Turbine Id : " + windTurbine.id));
+              idDiv.setAttribute('id', 'windI' + windTurbine.id);
+              let powerDiv = document.createElement("p");
+              powerDiv.appendChild(document.createTextNode("Power : " + (windTurbine.power)/1000 + " kW"));
+              powerDiv.setAttribute('id', 'windP' + windTurbine.id);
+              let rateDiv = document.createElement("p");
+              const rate = Math.round(((windTurbine.power)/1000) / windTurbine.number);
+              rateDiv.appendChild(document.createTextNode("Average : " + rate + " kW/U"));
+              rateDiv.setAttribute('id', 'windR' + windTurbine.id);
+              let azimuthDiv = document.createElement('p');
+              azimuthDiv.setAttribute('id', 'windA' + windTurbine.id);
+              azimuthDiv.textContent = "Azimuth : " + Math.round((windTurbine.azimuth*180)/6.28) + " °";
+              let numberDiv = document.createElement('p');
+              numberDiv.setAttribute('id', 'windN' + windTurbine.id);
+              numberDiv.textContent = "Number : " + windTurbine.number;
+              let newDiv = document.createElement("div");
+              newDiv.setAttribute('class', 'block sub_block');
+              newDiv.appendChild(idDiv);
+              newDiv.appendChild(powerDiv);
+              newDiv.appendChild(numberDiv);
+              newDiv.appendChild(rateDiv);
+              newDiv.appendChild(azimuthDiv);
+              let currentDiv = document.getElementById("windEnd");
+              let parentDiv = document.getElementById("windParent");
+              parentDiv.insertBefore(newDiv, currentDiv);
+            });
+            request(BARRAGE_REQUEST, function (error, response, body) {
+              let data = JSON.parse(body);
+              data.forEach(barrage => {
+                let idDiv = document.createElement("p");
+                idDiv.appendChild(document.createTextNode("Barrage Id : " + barrage.id));
+                let powerDiv = document.createElement("p");
+                powerDiv.appendChild(document.createTextNode("Power : " + barrage.power/1000 + " kW"));
+                powerDiv.setAttribute('id','barrageP'+barrage.id);
+                let locationDiv = document.createElement("p");
+                locationDiv.appendChild(document.createTextNode("Location : Unknown"));
+                let newDiv = document.createElement("div");
+                newDiv.setAttribute('class', 'block sub_block');
+                newDiv.appendChild(idDiv);
+                newDiv.appendChild(powerDiv);
+                newDiv.appendChild(locationDiv);
+                let currentDiv = document.getElementById("barrageEnd");
+                let parentDiv = document.getElementById("barrageParent");
+                parentDiv.insertBefore(newDiv, currentDiv);
+              });
+            });
+          });
+        });
+      });
     });
   });
 }
-
 function GettingData(){
-  cV = 0;
-  sV = 0;
-  bV = 0;
-  wV = 0;
-  uV = 0;
+  let cV = 0;
+  let sV = 0;
+  let bV = 0;
+  let wV = 0;
+  let uV = 0;
+  let time = 0;
+  let flywheelsMaxStorage = 40; //kWh
+  let windSp = 0;
+  let windAz = 0;
+  let solarAlt = 0;
+  let solarAz = 0;
   let fv1 = 0;
   let fv2 = 0;
   let total_consumer = 0;
@@ -97,310 +246,147 @@ function GettingData(){
     let data = JSON.parse(body);
     solarAlt = Math.round((data.altitude*180)/6.28);
     solarAz = Math.round((data.azimuth*180)/6.28);
-  });
-  request(WIND_REQUEST, function (error, response, body) {
-    let data = JSON.parse(body);
-    windSp = Math.round(data.speed);
-    windAz = Math.round((data.azimuth*180)/6.28);
-  });
-  request(TIME_REQUEST, function (error, response, body) {
-    let data = JSON.parse(body);
-    time = new Date(data.datetime);
-  });
-  request(SOLAR_PANEL_REQUEST, function (error, response, body) {
-    let data = JSON.parse(body);
-    data.forEach(solarPanel => {
-      sV += solarPanel.power;
-      let rate = Math.round(solarPanel.power / solarPanel.size);
-      let power = Math.round(solarPanel.power/ 1000);
-      if (first === 1) {
-        let idDiv = document.createElement("p");
-        idDiv.textContent = "Solar Panel Id : " + solarPanel.id;
-        idDiv.setAttribute('id', 'solarI' + solarPanel.id);
-        let powerDiv = document.createElement("p");
-        powerDiv.textContent = "Power : " + power + " kW";
-        powerDiv.setAttribute('id', 'solarP' + solarPanel.id);
-        let rateDiv = document.createElement("p");
-        rateDiv.setAttribute('id', 'solarR' + solarPanel.id);
-        rateDiv.textContent = "Average : " + rate + " W/m²";
-        let sizeDiv = document.createElement('p');
-        sizeDiv.setAttribute('id', 'solarS' + solarPanel.id);
-        sizeDiv.textContent = "Size : " + solarPanel.size + " m²";
-        let azimuthDiv = document.createElement('p');
-        azimuthDiv.setAttribute('id', 'solarA' + solarPanel.id);
-        azimuthDiv.textContent = "Azimuth : " + Math.round((solarPanel.azimuth*180)/6.28) + " °";
-        let newDiv = document.createElement("div");
-        newDiv.setAttribute('class', 'block sub_block');
-        newDiv.appendChild(idDiv);
-        newDiv.appendChild(powerDiv);
-        newDiv.appendChild(sizeDiv);
-        newDiv.appendChild(rateDiv);
-        newDiv.appendChild(azimuthDiv);
-        let currentDiv = document.getElementById("solarEnd");
-        let parentDiv = document.getElementById("solarParent");
-        parentDiv.insertBefore(newDiv, currentDiv);
-      }
-      else {
-        document.getElementById('solarP' + solarPanel.id).textContent = "Power : " + power + " kW";
-        document.getElementById('solarR' + solarPanel.id).textContent = "Average : " + rate + " W/m²";
-      }
-    });
-    request(WIND_TURBINE_REQUEST, function (error, response, body) {
+    request(WIND_REQUEST, function (error, response, body) {
       let data = JSON.parse(body);
-      data.forEach(windTurbine => {
-        wV += windTurbine.power;
-        if (first === 1) {
-          let idDiv = document.createElement("p");
-          idDiv.appendChild(document.createTextNode("Wind Turbine Id : " + windTurbine.id));
-          idDiv.setAttribute('id', 'windI' + windTurbine.id);
-          let powerDiv = document.createElement("p");
-          powerDiv.appendChild(document.createTextNode("Power : " + (windTurbine.power)/1000 + " kW"));
-          powerDiv.setAttribute('id', 'windP' + windTurbine.id);
-          let rateDiv = document.createElement("p");
-          const rate = Math.round(((windTurbine.power)/1000) / windTurbine.number);
-          rateDiv.appendChild(document.createTextNode("Average : " + rate + " kW/U"));
-          rateDiv.setAttribute('id', 'windR' + windTurbine.id);
-          let azimuthDiv = document.createElement('p');
-          azimuthDiv.setAttribute('id', 'windA' + windTurbine.id);
-          azimuthDiv.textContent = "Azimuth : " + Math.round((windTurbine.azimuth*180)/6.28) + " °";
-          let numberDiv = document.createElement('p');
-          numberDiv.setAttribute('id', 'windN' + windTurbine.id);
-          numberDiv.textContent = "Number : " + windTurbine.number;
-          let newDiv = document.createElement("div");
-          newDiv.setAttribute('class', 'block sub_block');
-          newDiv.appendChild(idDiv);
-          newDiv.appendChild(powerDiv);
-          newDiv.appendChild(numberDiv);
-          newDiv.appendChild(rateDiv);
-          newDiv.appendChild(azimuthDiv);
-          let currentDiv = document.getElementById("windEnd");
-          let parentDiv = document.getElementById("windParent");
-          parentDiv.insertBefore(newDiv, currentDiv);
-        }
-        else {
-          const rate = Math.round(((windTurbine.power)/1000) / windTurbine.number);
-          document.getElementById("windP" + windTurbine.id).textContent = "Power : " + Math.round((windTurbine.power)/1000) + " kW";
-          document.getElementById("windR" + windTurbine.id).textContent = "Average : " + rate + " kW/U";
-        }
-      });
-      request(BARRAGE_REQUEST, function (error, response, body) {
+      windSp = Math.round(data.speed);
+      windAz = Math.round((data.azimuth*180)/6.28);
+      request(TIME_REQUEST, function (error, response, body) {
         let data = JSON.parse(body);
-        data.forEach(barrage => {
-          bV += barrage.power;
-          if(first === 1) {
-            let idDiv = document.createElement("p");
-            idDiv.appendChild(document.createTextNode("Barrage Id : " + barrage.id));
-            let powerDiv = document.createElement("p");
-            powerDiv.appendChild(document.createTextNode("Power : " + barrage.power/1000 + " kW"));
-            powerDiv.setAttribute('id','barrageP'+barrage.id);
-            let locationDiv = document.createElement("p");
-            locationDiv.appendChild(document.createTextNode("Location : Unknown"));
-            let newDiv = document.createElement("div");
-            newDiv.setAttribute('class', 'block sub_block');
-            newDiv.appendChild(idDiv);
-            newDiv.appendChild(powerDiv);
-            newDiv.appendChild(locationDiv);
-            let currentDiv = document.getElementById("barrageEnd");
-            let parentDiv = document.getElementById("barrageParent");
-            parentDiv.insertBefore(newDiv, currentDiv);
-          }
-          else {
-            document.getElementById('barrageP'+barrage.id).textContent = "Power : " + barrage.power/1000 + " kW";
-          }
-        });
-        request(CITIES_REQUEST, function (error, response, body) {
+        time = new Date(data.datetime);
+        request(SOLAR_PANEL_REQUEST, function (error, response, body) {
           let data = JSON.parse(body);
-          data.forEach(city => {
-            cV += city.consumption;
-            if (first === 1) {
-              let idDiv = document.createElement("p");
-              idDiv.appendChild(document.createTextNode("City Id : " + city.id));
-              idDiv.setAttribute('id', 'cityI' + city.id);
-              let powerDiv = document.createElement("p");
-              powerDiv.appendChild(document.createTextNode("Power : " + city.consumption/1000 + " kW"));
-              powerDiv.setAttribute('id', 'cityP' + city.id);
-              let popDiv = document.createElement("p");
-              popDiv.appendChild(document.createTextNode("Population : " + city.population));
-              let rate = document.createElement("p");
-              rate.appendChild(document.createTextNode("Rate : " + Math.round(city.consumption/city.population) + " W/U"));
-              rate.setAttribute('id', 'cityR' + city.id);
-              let newDiv = document.createElement("div");
-              newDiv.setAttribute('class', 'block sub_block');
-              newDiv.appendChild(idDiv);
-              newDiv.appendChild(powerDiv);
-              newDiv.appendChild(popDiv);
-              newDiv.appendChild(rate);
-              let currentDiv = document.getElementById("cityEnd");
-              let parentDiv = document.getElementById("cityParent");
-              parentDiv.insertBefore(newDiv, currentDiv);
-            } else {
-              document.getElementById("cityP" + city.id).textContent = "Power : " + city.consumption/1000 + " kW";
-              document.getElementById("cityR" + city.id).textContent = "Av Power/Pop : " + city.consumption/city.population + " W/U";
-            }
+          data.forEach(solarPanel => {
+            sV += solarPanel.power;
+            let rate = Math.round(solarPanel.power / solarPanel.size);
+            let power = Math.round(solarPanel.power/ 1000);
+            document.getElementById('solarP' + solarPanel.id).textContent = "Power : " + power + " kW";
+            document.getElementById('solarR' + solarPanel.id).textContent = "Average : " + rate + " W/m²";
           });
-          //Got all data, calculating
-          const generation = sV + wV + bV; //Watt
-          const consumption = cV; //Watt
-          const result = generation - consumption; //Watt
-          if (result > 0) { //if we get extra power
-            let overflow = result; //Watt
-            flywheels.forEach( flywheel => {
-              const storage = flywheel.GetStorage(); //%
-              if (storage < 1 && overflow > 0) { //if the flywheel storage is not full
-                const maxConso = Math.min(40000,40000*10*(1-storage));
-                flywheel.UpdateStorage(maxConso/400000); //Watt --> Watt/h --> kWatt/h
-                flywheel.SetConsumption(maxConso);
-                fv1 += maxConso;
-                flywheel.SetMode("Consumer");
-                overflow -= maxConso;
-                total_consumer += maxConso;
-              }
-              if (storage === 1){
-                flywheel.SetConsumption(0);
-                flywheel.SetMode("Idle");
-              }
+          request(WIND_TURBINE_REQUEST, function (error, response, body) {
+            let data = JSON.parse(body);
+            data.forEach(windTurbine => {
+              wV += windTurbine.power;
+              const rate = Math.round(((windTurbine.power) / 1000) / windTurbine.number);
+              document.getElementById("windP" + windTurbine.id).textContent = "Power : " + Math.round((windTurbine.power) / 1000) + " kW";
+              document.getElementById("windR" + windTurbine.id).textContent = "Average : " + rate + " kW/U";
             });
-          }
-          else { //not enough power from producer
-            let resource = Math.abs(result); //power needed in Watt
-            flywheels.forEach( flywheel => {
-              if(flywheel.GetStorage() > 0) {
-                let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 365 * 1000; //power of the flywheel in Watt
-                if (maxPower > 40000) {
-                  maxPower = 40000;
-                }
-                fv2 += Math.max(Math.round(maxPower), 0);
-                flywheel.SetPower(Math.max(Math.round(maxPower), 0));
-                flywheel.UpdateStorage(Math.min((-1) * maxPower / 400000), 0); //Watt --> Watt/h --> kWatt/h
-                flywheel.SetMode("Producer");
-                resource -= maxPower;
-              }
-              else {
-                flywheel.SetMode("Producer");
-                flywheel.SetPower(0);
-              }
+            request(BARRAGE_REQUEST, function (error, response, body) {
+              let data = JSON.parse(body);
+              data.forEach(barrage => {
+                bV += barrage.power;
+                document.getElementById('barrageP' + barrage.id).textContent = "Power : " + barrage.power / 1000 + " kW";
+              });
+              request(CITIES_REQUEST, function (error, response, body) {
+                let data = JSON.parse(body);
+                data.forEach(city => {
+                  cV += city.consumption;
+                  document.getElementById("cityP" + city.id).textContent = "Power : " + city.consumption / 1000 + " kW";
+                  document.getElementById("cityR" + city.id).textContent = "Av Power/Pop : " + city.consumption / city.population + " W/U";
+                });
+                //Got all data, calculating
+                const generation = sV + wV + bV; //Watt
+                const consumption = cV; //Watt
+                const result = generation - consumption; //Watt
+                if (result > 0) { //if we get extra power
+                  let overflow = result; //Watt
+                  flywheels.forEach(flywheel => {
+                    const storage = flywheel.GetStorage(); //%
+                    if (storage < 1 && overflow > 0) { //if the flywheel storage is not full
+                      const maxConso = Math.min(40000, 40000 * 10 * (1 - storage));
+                      flywheel.UpdateStorage(maxConso / 400000); //Watt --> Watt/h --> kWatt/h
+                      flywheel.SetConsumption(maxConso);
+                      fv1 += maxConso;
+                      flywheel.SetMode("Consumer");
+                      overflow -= maxConso;
+                      total_consumer += maxConso;
+                    }
+                    if (storage === 1) {
+                      flywheel.SetConsumption(0);
+                      flywheel.SetMode("Idle");
+                    }
+                  });
+                } else { //not enough power from producer
+                  let resource = Math.abs(result); //power needed in Watt
+                  flywheels.forEach(flywheel => {
+                    if (flywheel.GetStorage() > 0) {
+                      let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 365 * 1000; //power of the flywheel in Watt
+                      if (maxPower > 40000) {
+                        maxPower = 40000;
+                      }
+                      fv2 += Math.max(Math.round(maxPower), 0);
+                      flywheel.SetPower(Math.max(Math.round(maxPower), 0));
+                      flywheel.UpdateStorage(Math.min((-1) * maxPower / 400000), 0); //Watt --> Watt/h --> kWatt/h
+                      flywheel.SetMode("Producer");
+                      resource -= maxPower;
+                    } else {
+                      flywheel.SetMode("Producer");
+                      flywheel.SetPower(0);
+                    }
 
+                  });
+                  central.total = central.total + (resource * central.emission);
+                  central.power = resource;
+                  uV = resource;
+                }
+                const total_producer = Math.round((generation + uV) / 1000);
+                total_consumer += Math.round(cV / 1000);
+                sV = Math.round(sV / 1000);
+                wV = Math.round(wV / 1000);
+                bV = Math.round(bV / 1000);
+                cV = Math.round(cV / 1000);
+                uV = Math.round(uV / 1000);
+                document.getElementById("speed").textContent = windSp + " m/s";
+                document.getElementById("altitude").textContent = solarAlt + " °";
+                document.getElementById("azimuthW").textContent = windAz + " °";
+                document.getElementById("azimuthS").textContent = solarAz + " °";
+                document.getElementById("sv").textContent = sV;
+                document.getElementById("bv").textContent = bV;
+                document.getElementById("wv").textContent = wV;
+                document.getElementById("cv").textContent = cV;
+                document.getElementById("cv2").textContent = cV;
+                document.getElementById("uv").textContent = uV;
+                document.getElementById("uv2").textContent = uV + " kW";
+                document.getElementById("date").textContent = time.toString().slice(0, 24);
+                document.getElementById('total_producer1').textContent = total_producer + " kW";
+                document.getElementById('total_producer2').textContent = total_producer + " kW";
+                document.getElementById('total_consumer1').textContent = total_consumer + " kW";
+                document.getElementById('total_consumer2').textContent = total_consumer + " kW";
+                document.getElementById("fv1").textContent = fv2 + " kW";
+                document.getElementById("fv11").textContent = fv2 + " kW";
+                document.getElementById("natural").textContent = (total_producer - fv2 - uV) + " kW";
+                document.getElementById("fv2").textContent = fv1 + " kW";
+                document.getElementById("fv22").textContent = fv1 + " kW";
+                if (total_producer > total_consumer) {
+                  document.getElementById("loosing").textContent = (total_producer - fv1 - cV) + " kW";
+                } else {
+                  document.getElementById("loosing").textContent = 0 + " kW";
+                }
+                flywheels.forEach(flywheel => {
+                  document.getElementById('flyP2' + flywheel.GetId()).textContent = "Consumption : " + Math.round(flywheel.GetConsumption() / 1000) + " kW";
+                  document.getElementById('flyS2' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage() * 100) + " %";
+                  document.getElementById('flyM2' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
+                  document.getElementById('flyP1' + flywheel.GetId()).textContent = "Power : " + flywheel.GetPower() / 1000 + " kW";
+                  document.getElementById('flyS1' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage() * 100) + " %";
+                  document.getElementById('flyM1' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
+                });
+                if (result > 0) { //if Flywheels are consumer
+                  //add flywheels power
+                  // we display consumer parent and hide the other one
+                  document.getElementById("flywheelParent2").style.display = "";
+                  document.getElementById("flywheelParent1").style.display = "none";
+                } else {
+                  document.getElementById("flywheelParent1").style.display = "";
+                  document.getElementById("flywheelParent2").style.display = "none";
+                }
+              });
             });
-            central.total = central.total + (resource * central.emission);
-            central.power = resource;
-            uV = resource;
-          }
-          const total_producer = Math.round((generation + uV)/1000);
-          total_consumer += Math.round(cV/1000);
-          sV = Math.round(sV / 1000);
-          wV = Math.round(wV / 1000);
-          bV = Math.round(bV / 1000);
-          cV = Math.round(cV / 1000);
-          uV = Math.round(uV / 1000);
-          document.getElementById("speed").textContent = windSp + " m/s";
-          document.getElementById("altitude").textContent = solarAlt + " °";
-          document.getElementById("azimuthW").textContent = windAz + " °";
-          document.getElementById("azimuthS").textContent = solarAz + " °";
-          document.getElementById("sv").textContent = sV;
-          document.getElementById("bv").textContent = bV;
-          document.getElementById("wv").textContent = wV;
-          document.getElementById("cv").textContent = cV;
-          document.getElementById("cv2").textContent = cV;
-          document.getElementById("uv").textContent = uV;
-          document.getElementById("uv2").textContent = uV + " kW";
-          document.getElementById("date").textContent = time.toString().slice(0,24);
-          document.getElementById('total_producer1').textContent = total_producer + " kW";
-          document.getElementById('total_producer2').textContent = total_producer + " kW";
-          document.getElementById('total_consumer1').textContent = total_consumer + " kW";
-          document.getElementById('total_consumer2').textContent = total_consumer + " kW";
-          document.getElementById("fv1").textContent = fv2 + " kW";
-          document.getElementById("fv11").textContent = fv2 + " kW";
-          document.getElementById("natural").textContent = (total_producer - fv2 - uV) + " kW";
-          document.getElementById("fv2").textContent = fv1 + " kW";
-          document.getElementById("fv22").textContent = fv1 + " kW";
-          if(total_producer > total_consumer){
-            document.getElementById("loosing").textContent = (total_producer - fv1 - uV) + " kW";
-          }
-          else {
-            document.getElementById("loosing").textContent = 0 + " kW";
-          }
-          flywheels.forEach(flywheel => {
-            if (first === 1) {
-              let idDiv = document.createElement("p");
-              idDiv.appendChild(document.createTextNode("Flywheel Id : " + flywheel.GetId()));
-              let powerDiv = document.createElement("p");
-              powerDiv.appendChild(document.createTextNode("Consumption : " + Math.round(flywheel.GetConsumption()/1000) + " kW"));
-              powerDiv.setAttribute('id', 'flyP2' + flywheel.GetId());
-              let storageDiv = document.createElement("p");
-              storageDiv.appendChild(document.createTextNode("Storage : " + Math.round(flywheel.GetStorage()*100) + " %"));
-              storageDiv.setAttribute('id', 'flyS2' + flywheel.GetId());
-              let modeDiv = document.createElement("p");
-              modeDiv.appendChild(document.createTextNode("Mode : " + flywheel.GetMode()));
-              modeDiv.setAttribute('id', 'flyM2' + flywheel.GetId());
-              let sizeDiv = document.createElement("p");
-              sizeDiv.appendChild(document.createTextNode("Size : " + flywheel.GetSize()));
-              sizeDiv.setAttribute('id', 'flyI2' + flywheel.GetId());
-              let newDiv = document.createElement("div");
-              newDiv.setAttribute('class', 'block sub_block');
-              newDiv.appendChild(idDiv);
-              newDiv.appendChild(powerDiv);
-              newDiv.appendChild(storageDiv);
-              newDiv.appendChild(modeDiv);
-              newDiv.appendChild(sizeDiv);
-              let currentDiv = document.getElementById("flywheelEnd2");
-              let parentDiv = document.getElementById("flywheelParent2");
-              parentDiv.insertBefore(newDiv, currentDiv);
-            }
-            else {
-              document.getElementById('flyP2' + flywheel.GetId()).textContent = "Consumption : " + Math.round(flywheel.GetConsumption()/1000) + " kW";
-              document.getElementById('flyS2' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage()*100) + " %";
-              document.getElementById('flyM2' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
-            }
           });
-          flywheels.forEach(flywheel => {
-            if (first === 1) {
-              let idDiv = document.createElement("p");
-              idDiv.appendChild(document.createTextNode("Flywheel Id : " + flywheel.GetId()));
-              let powerDiv = document.createElement("p");
-              powerDiv.appendChild(document.createTextNode("Power : " + flywheel.GetPower('k') + " kW"));
-              powerDiv.setAttribute('id', 'flyP1' + flywheel.GetId());
-              let storageDiv = document.createElement("p");
-              storageDiv.appendChild(document.createTextNode("Storage : " + Math.round(flywheel.GetStorage()*100) + " %"));
-              storageDiv.setAttribute('id', 'flyS1' + flywheel.GetId());
-              let modeDiv = document.createElement("p");
-              modeDiv.appendChild(document.createTextNode("Mode : " + flywheel.GetMode()));
-              modeDiv.setAttribute('id', 'flyM1' + flywheel.GetId());
-              let sizeDiv = document.createElement("p");
-              sizeDiv.appendChild(document.createTextNode("Size : " + flywheel.GetSize()));
-              sizeDiv.setAttribute('id', 'flyI1' + flywheel.GetId());
-              let newDiv = document.createElement("div");
-              newDiv.setAttribute('class', 'block sub_block');
-              newDiv.appendChild(idDiv);
-              newDiv.appendChild(powerDiv);
-              newDiv.appendChild(storageDiv);
-              newDiv.appendChild(modeDiv);
-              newDiv.appendChild(sizeDiv);
-              let currentDiv = document.getElementById("flywheelEnd1");
-              let parentDiv = document.getElementById("flywheelParent1");
-              parentDiv.insertBefore(newDiv, currentDiv);
-            } else {
-              document.getElementById('flyP1' + flywheel.GetId()).textContent = "Power : " + flywheel.GetPower()/1000 + " kW";
-              document.getElementById('flyS1' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage()*100) + " %";
-              document.getElementById('flyM1' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
-            }
-          });
-          if (result > 0) { //if Flywheels are consumer
-            //add flywheels power
-            // we display consumer parent and hide the other one
-            document.getElementById("flywheelParent2").style.display = "";
-            document.getElementById("flywheelParent1").style.display = "none";
-          }
-          else {
-            document.getElementById("flywheelParent1").style.display = "";
-            document.getElementById("flywheelParent2").style.display = "none";
-          }
-          //Graphs creation below
-          first = 0;
         });
       });
     });
   });
 }
+
 function App(){
   Initialization();
   setInterval(GettingData,1000);
