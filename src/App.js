@@ -59,6 +59,7 @@ let windAz = 0;
 let solarAlt = 0;
 let solarAz = 0;
 let first = 1;
+let timePrevious;
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -310,11 +311,11 @@ function GettingData(){
           document.getElementById('total_consumer2').textContent = total_consumer + " kW";
           document.getElementById("fv1").textContent = fv2 + " kW";
           document.getElementById("fv11").textContent = fv2 + " kW";
-          document.getElementById("natural").textContent = (total_producer - fv2) + " kW";
+          document.getElementById("natural").textContent = (total_producer - fv2 - uV) + " kW";
           document.getElementById("fv2").textContent = fv1 + " kW";
           document.getElementById("fv22").textContent = fv1 + " kW";
           if(total_producer > total_consumer){
-            document.getElementById("loosing").textContent = (total_producer - total_consumer) + " kW";
+            document.getElementById("loosing").textContent = (total_producer - fv1 - uV) + " kW";
           }
           else {
             document.getElementById("loosing").textContent = 0 + " kW";
@@ -395,6 +396,7 @@ function GettingData(){
             document.getElementById("flywheelParent2").style.display = "none";
           }
           //Graphs creation below
+          timePrevious = time;
           first = 0;
         });
       });
