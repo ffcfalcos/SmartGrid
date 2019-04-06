@@ -59,7 +59,6 @@ let windAz = 0;
 let solarAlt = 0;
 let solarAz = 0;
 let first = 1;
-let timePrevious;
 
 const SOLAR_PANEL_REQUEST = "http://localhost:8000/api/v1/producers/solar-panels";
 const WIND_TURBINE_REQUEST = "http://localhost:8000/api/v1/producers/wind-turbines";
@@ -266,7 +265,7 @@ function GettingData(){
             let resource = Math.abs(result); //power needed in Watt
             flywheels.forEach( flywheel => {
               if(flywheel.GetStorage() > 0) {
-                let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 360 * 1000; //power of the flywheel in Watt
+                let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 365 * 1000; //power of the flywheel in Watt
                 if (maxPower > 40000) {
                   maxPower = 40000;
                 }
@@ -396,7 +395,6 @@ function GettingData(){
             document.getElementById("flywheelParent2").style.display = "none";
           }
           //Graphs creation below
-          timePrevious = time;
           first = 0;
         });
       });
