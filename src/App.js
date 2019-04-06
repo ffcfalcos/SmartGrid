@@ -40,9 +40,6 @@ class Flywheel {
   GetMode(){
     return this.mode;
   }
-  GetSize(){
-    return this.size;
-  }
 }
 
 let flywheels = [];
@@ -159,7 +156,7 @@ function Initialization(){
             sizeDiv.textContent = "Size : " + solarPanel.size + " m²";
             let azimuthDiv = document.createElement('p');
             azimuthDiv.setAttribute('id', 'solarA' + solarPanel.id);
-            azimuthDiv.textContent = "Azimuth : " + Math.round((solarPanel.azimuth*180)/6.28) + " °";
+            azimuthDiv.textContent = "Azimuth : " + Math.round(solarPanel.azimuth*28.66) + " °";
             let newDiv = document.createElement("div");
             newDiv.setAttribute('class', 'block sub_block');
             newDiv.appendChild(idDiv);
@@ -186,7 +183,7 @@ function Initialization(){
               rateDiv.setAttribute('id', 'windR' + windTurbine.id);
               let azimuthDiv = document.createElement('p');
               azimuthDiv.setAttribute('id', 'windA' + windTurbine.id);
-              azimuthDiv.textContent = "Azimuth : " + Math.round((windTurbine.azimuth*180)/6.28) + " °";
+              azimuthDiv.textContent = "Azimuth : " + Math.round(windTurbine.azimuth*28.66) + " °";
               let numberDiv = document.createElement('p');
               numberDiv.setAttribute('id', 'windN' + windTurbine.id);
               numberDiv.textContent = "Number : " + windTurbine.number;
@@ -244,12 +241,12 @@ function GettingData(){
   let total_consumer = 0;
   request(SOLAR_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
-    solarAlt = Math.round((data.altitude*180)/6.28);
-    solarAz = Math.round((data.azimuth*180)/6.28);
+    solarAlt = Math.round(data.altitude*28.66);
+    solarAz = Math.round(data.azimuth*28.66);
     request(WIND_REQUEST, function (error, response, body) {
       let data = JSON.parse(body);
       windSp = Math.round(data.speed);
-      windAz = Math.round((data.azimuth*180)/6.28);
+      windAz = Math.round(data.azimuth*28.66);
       request(TIME_REQUEST, function (error, response, body) {
         let data = JSON.parse(body);
         time = new Date(data.datetime);
@@ -257,18 +254,15 @@ function GettingData(){
           let data = JSON.parse(body);
           data.forEach(solarPanel => {
             sV += solarPanel.power;
-            let rate = Math.round(solarPanel.power / solarPanel.size);
-            let power = Math.round(solarPanel.power/ 1000);
-            document.getElementById('solarP' + solarPanel.id).textContent = "Power : " + power + " kW";
-            document.getElementById('solarR' + solarPanel.id).textContent = "Average : " + rate + " W/m²";
+            document.getElementById('solarP' + solarPanel.id).textContent = "Power : " + Math.round(solarPanel.power/1000) + " kW";
+            document.getElementById('solarR' + solarPanel.id).textContent = "Average : " + Math.round(solarPanel.power / solarPanel.size) + " W/m²";
           });
           request(WIND_TURBINE_REQUEST, function (error, response, body) {
             let data = JSON.parse(body);
             data.forEach(windTurbine => {
               wV += windTurbine.power;
-              const rate = Math.round(((windTurbine.power) / 1000) / windTurbine.number);
               document.getElementById("windP" + windTurbine.id).textContent = "Power : " + Math.round((windTurbine.power) / 1000) + " kW";
-              document.getElementById("windR" + windTurbine.id).textContent = "Average : " + rate + " kW/U";
+              document.getElementById("windR" + windTurbine.id).textContent = "Average : " + Math.round(((windTurbine.power) / 1000) / windTurbine.number) + " kW/U";
             });
             request(BARRAGE_REQUEST, function (error, response, body) {
               let data = JSON.parse(body);
@@ -286,9 +280,9 @@ function GettingData(){
                 //Got all data, calculating
                 const generation = sV + wV + bV; //Watt
                 const consumption = cV; //Watt
-                const result = generation - consumption; //Watt
-                if (result > 0) { //if we get extra power
-                  let overflow = result; //Watt
+                const difference = generation - consumption; //Watt
+                if (difference > 0) { //if we get extra power
+                  let overflow = difference;
                   flywheels.forEach(flywheel => {
                     const storage = flywheel.GetStorage(); //%
                     if (storage < 1 && overflow > 0) { //if the flywheel storage is not full
@@ -306,7 +300,7 @@ function GettingData(){
                     }
                   });
                 } else { //not enough power from producer
-                  let resource = Math.abs(result); //power needed in Watt
+                  let resource = Math.abs(difference); //power needed in Watt
                   flywheels.forEach(flywheel => {
                     if (flywheel.GetStorage() > 0) {
                       let maxPower = flywheel.GetStorage() * flywheelsMaxStorage * 365 * 1000; //power of the flywheel in Watt
@@ -345,17 +339,19 @@ function GettingData(){
                 document.getElementById("cv").textContent = cV;
                 document.getElementById("cv2").textContent = cV;
                 document.getElementById("uv").textContent = uV;
+                document.getElementById("emission").textContent = Math.round(central.emission * central.power * 3.6) + " kg/h";
+                document.getElementById("temission").textContent = Math.round(central.total) + " kg";
                 document.getElementById("uv2").textContent = uV + " kW";
                 document.getElementById("date").textContent = time.toString().slice(0, 24);
                 document.getElementById('total_producer1').textContent = total_producer + " kW";
                 document.getElementById('total_producer2').textContent = total_producer + " kW";
                 document.getElementById('total_consumer1').textContent = total_consumer + " kW";
                 document.getElementById('total_consumer2').textContent = total_consumer + " kW";
-                document.getElementById("fv1").textContent = fv2 + " kW";
-                document.getElementById("fv11").textContent = fv2 + " kW";
+                document.getElementById("fv1").textContent = fv2/1000 + " kW";
+                document.getElementById("fv11").textContent = fv2/1000 + " kW";
                 document.getElementById("natural").textContent = (total_producer - fv2 - uV) + " kW";
-                document.getElementById("fv2").textContent = fv1 + " kW";
-                document.getElementById("fv22").textContent = fv1 + " kW";
+                document.getElementById("fv2").textContent = fv1/1000 + " kW";
+                document.getElementById("fv22").textContent = fv1/1000 + " kW";
                 if (total_producer > total_consumer) {
                   document.getElementById("loosing").textContent = (total_producer - fv1 - cV) + " kW";
                 } else {
@@ -369,7 +365,7 @@ function GettingData(){
                   document.getElementById('flyS1' + flywheel.GetId()).textContent = "Storage : " + Math.round(flywheel.GetStorage() * 100) + " %";
                   document.getElementById('flyM1' + flywheel.GetId()).textContent = "Mode : " + flywheel.GetMode();
                 });
-                if (result > 0) { //if Flywheels are consumer
+                if (difference > 0) { //if Flywheels are consumer
                   //add flywheels power
                   // we display consumer parent and hide the other one
                   document.getElementById("flywheelParent2").style.display = "";
@@ -448,7 +444,11 @@ function App(){
           <div className={"line centralParent"} id={"centralParent"}>
             <div id={"central"} className={"block main_block2"}>
               <p className={"block_title"}>Coal Central</p>
-              <p>Power : <span id="uv">0</span> kW</p>
+              <p>Power : <span id="uv">-</span> kW</p>
+            </div>
+            <div className={"block main_block2"}>
+              <p>Emission : <span id="emission">-</span></p>
+              <p>Total Emission : <span id="temission">-</span></p>
             </div>
             <div id={"centralEnd"}/>
           </div>
