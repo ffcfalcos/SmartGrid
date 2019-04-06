@@ -92,6 +92,7 @@ function GettingData(){
   uV = 0;
   let fv1 = 0;
   let fv2 = 0;
+  let total_consumer = 0;
   request(SOLAR_REQUEST, function (error, response, body) {
     let data = JSON.parse(body);
     solarAlt = Math.round((data.altitude*180)/6.28);
@@ -190,7 +191,7 @@ function GettingData(){
             let idDiv = document.createElement("p");
             idDiv.appendChild(document.createTextNode("Barrage Id : " + barrage.id));
             let powerDiv = document.createElement("p");
-            powerDiv.appendChild(document.createTextNode("Power : " + barrage.power/1000000 + " MW"));
+            powerDiv.appendChild(document.createTextNode("Power : " + barrage.power/1000 + " kW"));
             powerDiv.setAttribute('id','barrageP'+barrage.id);
             let locationDiv = document.createElement("p");
             locationDiv.appendChild(document.createTextNode("Location : Unknown"));
@@ -252,6 +253,7 @@ function GettingData(){
                 fv1 += maxConso;
                 flywheel.SetMode("Consumer");
                 overflow -= maxConso;
+                total_consumer += maxConso;
               }
               if (storage === 1){
                 flywheel.SetConsumption(0);
@@ -284,6 +286,7 @@ function GettingData(){
             uV = resource;
           }
           const total_producer = Math.round((generation + uV)/1000);
+          total_consumer += Math.round(cV/1000);
           sV = Math.round(sV / 1000);
           wV = Math.round(wV / 1000);
           bV = Math.round(bV / 1000);
@@ -297,12 +300,25 @@ function GettingData(){
           document.getElementById("bv").textContent = bV;
           document.getElementById("wv").textContent = wV;
           document.getElementById("cv").textContent = cV;
+          document.getElementById("cv2").textContent = cV;
           document.getElementById("uv").textContent = uV;
+          document.getElementById("uv2").textContent = uV + " kW";
           document.getElementById("date").textContent = time.toString().slice(0,24);
           document.getElementById('total_producer1').textContent = total_producer + " kW";
           document.getElementById('total_producer2').textContent = total_producer + " kW";
-          document.getElementById("fv1").textContent = fv1 + " kW";
-          document.getElementById("fv2").textContent = fv2 + " kW";
+          document.getElementById('total_consumer1').textContent = total_consumer + " kW";
+          document.getElementById('total_consumer2').textContent = total_consumer + " kW";
+          document.getElementById("fv1").textContent = fv2 + " kW";
+          document.getElementById("fv11").textContent = fv2 + " kW";
+          document.getElementById("natural").textContent = (total_producer - fv2) + " kW";
+          document.getElementById("fv2").textContent = fv1 + " kW";
+          document.getElementById("fv22").textContent = fv1 + " kW";
+          if(total_producer > total_consumer){
+            document.getElementById("loosing").textContent = (total_producer - total_consumer) + " kW";
+          }
+          else {
+            document.getElementById("loosing").textContent = 0 + " kW";
+          }
           flywheels.forEach(flywheel => {
             if (first === 1) {
               let idDiv = document.createElement("p");
@@ -406,8 +422,11 @@ function App(){
             <div><p>Production : <span id="co2prod">100 kg/h</span></p></div>
             <div><p>Total Production : <span id="co2total">48744 kg</span></p></div>
           </div>
-          <div className={"block"}>
-            <p>Producers <span id="total_producer1">0</span></p>
+          <div className={"block desc"}>
+            <div>Producers : <span id="total_producer1">-</span></div>
+            <div>&emsp;&emsp;(Natural : <span id={"natural"}>-</span> + Flywheels : <span id={"fv11"}>-</span> + Central : <span id={"uv2"}>-</span>)</div>
+            <div>Consumer : <span id="total_consumer1">-</span> --> Loosing : <span id="loosing">-</span></div>
+            <div>&emsp;&emsp;(Cities : <span id="cv2">-</span> + FlyWheels : <span id={"fv22"}>-</span>)</div>
           </div>
         </div>
         <div id={"Producer"} className={"Producer"}>
@@ -449,11 +468,11 @@ function App(){
           </div>
         </div>
         <div id={"Consumer"} className={"Consumer"}>
-          <p className={"title"}>Consumers</p>
+          <p className={"title"}>Consumers : <span id="total_consumer2">-</span></p>
           <div className={"line"} id={"cityParent"}>
             <div id={"city"} className={"block main_block2"}>
               <p className={"block_title"}>Cities</p>
-              <p>Consumption : <span id="cv">0</span> kW</p>
+              <p>Consumption : <span id="cv">-</span> kW</p>
             </div>
             <div id={"cityEnd"}/>
           </div>

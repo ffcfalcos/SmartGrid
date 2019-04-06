@@ -169,11 +169,16 @@
     opacity: 1;
     background-color: white;
     border-bottom: solid;
-    height: 120px;
+    border-color: green;
+    border-width: 5px;
     margin-right: 50px;
 }
 .Producer{
-    margin-top: 180px;
+    margin-top: 190px;
+}
+.desc {
+    margin-left: 20px;
+    height: 100px;
 }
 .button_menu{
     background-color: green;
